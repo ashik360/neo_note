@@ -1,5 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:share_plus/share_plus.dart';
+import 'shopping_share.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
+import 'rich_note_editor.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +17,6 @@ import 'package:local_auth/local_auth.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -61,14 +64,16 @@ class NeoKeepApp extends StatelessWidget {
     );
 
     return base.copyWith(
-      scaffoldBackgroundColor:
-          isDark ? const Color(0xFF111827) : const Color(0xFFF8FAFC),
+      scaffoldBackgroundColor: isDark
+          ? const Color(0xFF111827)
+          : const Color(0xFFF8FAFC),
       appBarTheme: AppBarTheme(
         elevation: 0,
         centerTitle: false,
         scrolledUnderElevation: 0,
-        backgroundColor:
-            isDark ? const Color(0xFF111827) : const Color(0xFFF8FAFC),
+        backgroundColor: isDark
+            ? const Color(0xFF111827)
+            : const Color(0xFFF8FAFC),
       ),
       cardTheme: CardThemeData(
         elevation: 0,
@@ -82,8 +87,10 @@ class NeoKeepApp extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide.none,
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
       ),
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
@@ -174,11 +181,7 @@ class Folder {
     return 'folder_outlined';
   }
 
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'iconKey': iconKey,
-      };
+  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'iconKey': iconKey};
 
   factory Folder.fromJson(Map<String, dynamic> json) {
     final key =
@@ -200,10 +203,10 @@ class NoteLabel {
   NoteLabel({required this.id, required this.name, required this.color});
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'colorValue': color.value,
-      };
+    'id': id,
+    'name': name,
+    'colorValue': color.value,
+  };
 
   factory NoteLabel.fromJson(Map<String, dynamic> json) {
     return NoteLabel(
@@ -219,27 +222,32 @@ class ShoppingItem {
   String name;
   bool isChecked;
   double unitPrice;
+  bool hasPrice;
 
   ShoppingItem({
     required this.id,
     required this.name,
     this.isChecked = false,
-    this.unitPrice = 0,
-  });
+    double? unitPrice,
+    bool? hasPrice,
+  }) : unitPrice = unitPrice ?? 0,
+       hasPrice = hasPrice ?? unitPrice != null;
 
   ShoppingItem copy() => ShoppingItem(
-        id: id,
-        name: name,
-        isChecked: isChecked,
-        unitPrice: unitPrice,
-      );
+    id: id,
+    name: name,
+    isChecked: isChecked,
+    unitPrice: unitPrice,
+    hasPrice: hasPrice,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'isChecked': isChecked,
-        'unitPrice': unitPrice,
-      };
+    'id': id,
+    'name': name,
+    'isChecked': isChecked,
+    'unitPrice': unitPrice,
+    'hasPrice': hasPrice,
+  };
 
   factory ShoppingItem.fromJson(Map<String, dynamic> json) {
     return ShoppingItem(
@@ -247,6 +255,8 @@ class ShoppingItem {
       name: json['name'] ?? '',
       isChecked: json['isChecked'] ?? false,
       unitPrice: (json['unitPrice'] as num?)?.toDouble() ?? 0,
+      hasPrice:
+          json['hasPrice'] as bool? ?? ((json['unitPrice'] as num?) ?? 0) != 0,
     );
   }
 }
@@ -256,23 +266,16 @@ class ChecklistItem {
   String text;
   bool isChecked;
 
-  ChecklistItem({
-    required this.id,
-    required this.text,
-    this.isChecked = false,
-  });
+  ChecklistItem({required this.id, required this.text, this.isChecked = false});
 
-  ChecklistItem copy() => ChecklistItem(
-        id: id,
-        text: text,
-        isChecked: isChecked,
-      );
+  ChecklistItem copy() =>
+      ChecklistItem(id: id, text: text, isChecked: isChecked);
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'text': text,
-        'isChecked': isChecked,
-      };
+    'id': id,
+    'text': text,
+    'isChecked': isChecked,
+  };
 
   factory ChecklistItem.fromJson(Map<String, dynamic> json) {
     return ChecklistItem(
@@ -301,22 +304,22 @@ class NoteAttachment {
   }) : createdAt = createdAt ?? DateTime.now();
 
   NoteAttachment copy() => NoteAttachment(
-        id: id,
-        type: type,
-        data: data,
-        fileName: fileName,
-        drawingJson: drawingJson,
-        createdAt: createdAt,
-      );
+    id: id,
+    type: type,
+    data: data,
+    fileName: fileName,
+    drawingJson: drawingJson,
+    createdAt: createdAt,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'type': type,
-        'data': data,
-        'fileName': fileName,
-        'drawingJson': drawingJson,
-        'createdAt': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'type': type,
+    'data': data,
+    'fileName': fileName,
+    'drawingJson': drawingJson,
+    'createdAt': createdAt.toIso8601String(),
+  };
 
   factory NoteAttachment.fromJson(Map<String, dynamic> json) {
     return NoteAttachment(
@@ -334,6 +337,7 @@ class Note {
   String id;
   String title;
   String content;
+  List<Map<String, dynamic>>? richContent;
   NoteType type;
   NoteStatus status;
   String? folderId;
@@ -354,6 +358,7 @@ class Note {
     required this.id,
     required this.title,
     required this.content,
+    this.richContent,
     this.type = NoteType.text,
     this.status = NoteStatus.active,
     this.folderId,
@@ -369,8 +374,8 @@ class Note {
     required this.shoppingItems,
     required this.checklistItems,
     required this.attachments,
-  })  : createdAt = createdAt ?? DateTime.now(),
-        updatedAt = updatedAt ?? DateTime.now();
+  }) : createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
   bool get hasContent =>
       title.trim().isNotEmpty ||
@@ -380,46 +385,52 @@ class Note {
       attachments.isNotEmpty;
 
   Note copy() => Note(
-        id: id,
-        title: title,
-        content: content,
-        type: type,
-        status: status,
-        folderId: folderId,
-        labelIds: List<String>.from(labelIds),
-        colorHex: colorHex,
-        isPinned: isPinned,
-        isLocked: isLocked,
-        createdAt: createdAt,
-        updatedAt: updatedAt,
-        reminderAt: reminderAt,
-        reminderFired: reminderFired,
-        trashedAt: trashedAt,
-        shoppingItems: shoppingItems.map((e) => e.copy()).toList(),
-        checklistItems: checklistItems.map((e) => e.copy()).toList(),
-        attachments: attachments.map((e) => e.copy()).toList(),
-      );
+    id: id,
+    title: title,
+    content: content,
+    richContent: richContent == null
+        ? null
+        : (jsonDecode(jsonEncode(richContent)) as List)
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList(),
+    type: type,
+    status: status,
+    folderId: folderId,
+    labelIds: List<String>.from(labelIds),
+    colorHex: colorHex,
+    isPinned: isPinned,
+    isLocked: isLocked,
+    createdAt: createdAt,
+    updatedAt: updatedAt,
+    reminderAt: reminderAt,
+    reminderFired: reminderFired,
+    trashedAt: trashedAt,
+    shoppingItems: shoppingItems.map((e) => e.copy()).toList(),
+    checklistItems: checklistItems.map((e) => e.copy()).toList(),
+    attachments: attachments.map((e) => e.copy()).toList(),
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'content': content,
-        'type': type.name,
-        'status': status.name,
-        'folderId': folderId,
-        'labelIds': labelIds,
-        'colorHex': colorHex,
-        'isPinned': isPinned,
-        'isLocked': isLocked,
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
-        'reminderAt': reminderAt?.toIso8601String(),
-        'reminderFired': reminderFired,
-        'trashedAt': trashedAt?.toIso8601String(),
-        'shoppingItems': shoppingItems.map((e) => e.toJson()).toList(),
-        'checklistItems': checklistItems.map((e) => e.toJson()).toList(),
-        'attachments': attachments.map((e) => e.toJson()).toList(),
-      };
+    'id': id,
+    'title': title,
+    'content': content,
+    if (richContent != null) 'richContent': richContent,
+    'type': type.name,
+    'status': status.name,
+    'folderId': folderId,
+    'labelIds': labelIds,
+    'colorHex': colorHex,
+    'isPinned': isPinned,
+    'isLocked': isLocked,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+    'reminderAt': reminderAt?.toIso8601String(),
+    'reminderFired': reminderFired,
+    'trashedAt': trashedAt?.toIso8601String(),
+    'shoppingItems': shoppingItems.map((e) => e.toJson()).toList(),
+    'checklistItems': checklistItems.map((e) => e.toJson()).toList(),
+    'attachments': attachments.map((e) => e.toJson()).toList(),
+  };
 
   factory Note.fromJson(Map<String, dynamic> json) {
     final oldShoppingMode = json['isShoppingMode'] == true;
@@ -431,6 +442,9 @@ class Note {
       id: json['id'] ?? _newId('note'),
       title: json['title'] ?? '',
       content: json['content'] ?? '',
+      richContent: (json['richContent'] as List?)
+          ?.map((e) => Map<String, dynamic>.from(e))
+          .toList(),
       type: NoteType.values.firstWhere(
         (e) => e.name == json['type'],
         orElse: () => oldShoppingMode ? NoteType.shopping : NoteType.text,
@@ -444,7 +458,8 @@ class Note {
       colorHex: json['colorHex'] ?? '#FFF8B8',
       isPinned: json['isPinned'] ?? false,
       isLocked: json['isLocked'] ?? false,
-      createdAt: DateTime.tryParse(json['createdAt'] ?? '') ??
+      createdAt:
+          DateTime.tryParse(json['createdAt'] ?? '') ??
           DateTime.tryParse(json['updatedAt'] ?? '') ??
           DateTime.now(),
       updatedAt: DateTime.tryParse(json['updatedAt'] ?? '') ?? DateTime.now(),
@@ -452,18 +467,21 @@ class Note {
           ? null
           : DateTime.tryParse(json['reminderAt']),
       reminderFired: json['reminderFired'] ?? false,
-      trashedAt:
-          json['trashedAt'] == null ? null : DateTime.tryParse(json['trashedAt']),
-      shoppingItems:
-          rawShoppingItems.map((e) => ShoppingItem.fromJson(e)).toList(),
-      checklistItems:
-          rawChecklistItems.map((e) => ChecklistItem.fromJson(e)).toList(),
-      attachments:
-          rawAttachments.map((e) => NoteAttachment.fromJson(e)).toList(),
+      trashedAt: json['trashedAt'] == null
+          ? null
+          : DateTime.tryParse(json['trashedAt']),
+      shoppingItems: rawShoppingItems
+          .map((e) => ShoppingItem.fromJson(e))
+          .toList(),
+      checklistItems: rawChecklistItems
+          .map((e) => ChecklistItem.fromJson(e))
+          .toList(),
+      attachments: rawAttachments
+          .map((e) => NoteAttachment.fromJson(e))
+          .toList(),
     );
   }
 }
-
 
 // ================================================================
 // PERMISSIONS + LOCAL NOTIFICATIONS
@@ -472,7 +490,9 @@ class Note {
 class AppPermissionService {
   static const String _permissionAskedKey = 'NeoNote_permissions_requested_v5';
 
-  static Future<void> requestFirstLaunchPermissions(SharedPreferences? prefs) async {
+  static Future<void> requestFirstLaunchPermissions(
+    SharedPreferences? prefs,
+  ) async {
     if (kIsWeb) return;
     final alreadyAsked = prefs?.getBool(_permissionAskedKey) ?? false;
     if (alreadyAsked) return;
@@ -516,16 +536,14 @@ class AppPermissionService {
     try {
       final photos = await Permission.photos.request();
       final storage = await Permission.storage.request();
-      if (photos.isGranted || photos.isLimited || storage.isGranted) return true;
+      if (photos.isGranted || photos.isLimited || storage.isGranted)
+        return true;
     } catch (_) {
       // image_picker can still open Android Photo Picker on modern Android.
       return true;
     }
     if (context.mounted) {
-      _snack(
-        context,
-        'Photo/storage permission is required to attach images.',
-      );
+      _snack(context, 'Photo/storage permission is required to attach images.');
     }
     return false;
   }
@@ -564,9 +582,7 @@ class NotificationService {
         macOS: darwin,
       );
 
-      await _plugin.initialize(
-        settings: initSettings,
-      );
+      await _plugin.initialize(settings: initSettings);
 
       _ready = true;
     } catch (e) {
@@ -581,30 +597,25 @@ class NotificationService {
     try {
       final android = _plugin
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
+            AndroidFlutterLocalNotificationsPlugin
+          >();
 
       // Safe for Android 13+ and avoids OS-level exact alarm panics
       await android?.requestNotificationsPermission();
 
       final ios = _plugin
           .resolvePlatformSpecificImplementation<
-              IOSFlutterLocalNotificationsPlugin>();
+            IOSFlutterLocalNotificationsPlugin
+          >();
 
-      await ios?.requestPermissions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
+      await ios?.requestPermissions(alert: true, badge: true, sound: true);
 
       final macos = _plugin
           .resolvePlatformSpecificImplementation<
-              MacOSFlutterLocalNotificationsPlugin>();
+            MacOSFlutterLocalNotificationsPlugin
+          >();
 
-      await macos?.requestPermissions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
+      await macos?.requestPermissions(alert: true, badge: true, sound: true);
     } catch (e) {
       debugPrint('Notification permission request failed: $e');
     }
@@ -618,14 +629,14 @@ class NotificationService {
     if (!_ready) return;
 
     try {
-      await _plugin.cancel(
-        id: _idFor(noteId),
-      );
+      await _plugin.cancel(id: _idFor(noteId));
     } catch (_) {}
   }
 
   static Future<void> scheduleNoteReminder(Note note) async {
-    if (!_ready || note.reminderAt == null || note.status != NoteStatus.active) {
+    if (!_ready ||
+        note.reminderAt == null ||
+        note.status != NoteStatus.active) {
       await cancelReminder(note.id);
       return;
     }
@@ -646,17 +657,19 @@ class NotificationService {
       visibility: NotificationVisibility.public,
     );
 
-    const details = NotificationDetails(
-      android: androidDetails,
-    );
+    const details = NotificationDetails(android: androidDetails);
 
     try {
-      // Using inexact scheduling prevents modern OS execution crashes entirely 
+      // Using inexact scheduling prevents modern OS execution crashes entirely
       // while preserving dependable reminder behavior
       await _plugin.zonedSchedule(
         id: _idFor(note.id),
-        title: note.title.trim().isEmpty ? 'NeoNote reminder' : note.title.trim(),
-        body: note.content.trim().isEmpty ? 'Open your note' : note.content.trim(),
+        title: note.title.trim().isEmpty
+            ? 'NeoNote reminder'
+            : note.title.trim(),
+        body: note.content.trim().isEmpty
+            ? 'Open your note'
+            : note.content.trim(),
         scheduledDate: tz.TZDateTime.from(due, tz.local),
         notificationDetails: details,
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
@@ -680,15 +693,17 @@ class NotificationService {
       visibility: NotificationVisibility.public,
     );
 
-    const details = NotificationDetails(
-      android: androidDetails,
-    );
+    const details = NotificationDetails(android: androidDetails);
 
     try {
       await _plugin.show(
         id: _idFor('${note.id}_now'),
-        title: note.title.trim().isEmpty ? 'NeoNote reminder' : note.title.trim(),
-        body: note.content.trim().isEmpty ? 'Open your note' : note.content.trim(),
+        title: note.title.trim().isEmpty
+            ? 'NeoNote reminder'
+            : note.title.trim(),
+        body: note.content.trim().isEmpty
+            ? 'Open your note'
+            : note.content.trim(),
         notificationDetails: details,
         payload: note.id,
       );
@@ -776,7 +791,11 @@ class NotesProvider extends ChangeNotifier {
 
   void _seedFolders() {
     folders = [
-      Folder(id: 'folder_personal', name: 'Personal', icon: Icons.home_outlined),
+      Folder(
+        id: 'folder_personal',
+        name: 'Personal',
+        icon: Icons.home_outlined,
+      ),
       Folder(id: 'folder_work', name: 'Work', icon: Icons.work_outline),
       Folder(
         id: 'folder_shopping',
@@ -788,9 +807,21 @@ class NotesProvider extends ChangeNotifier {
 
   void _seedLabels() {
     labels = [
-      NoteLabel(id: 'label_urgent', name: 'urgent', color: const Color(0xFFEF4444)),
-      NoteLabel(id: 'label_ideas', name: 'ideas', color: const Color(0xFF3B82F6)),
-      NoteLabel(id: 'label_budget', name: 'budget', color: const Color(0xFFF59E0B)),
+      NoteLabel(
+        id: 'label_urgent',
+        name: 'urgent',
+        color: const Color(0xFFEF4444),
+      ),
+      NoteLabel(
+        id: 'label_ideas',
+        name: 'ideas',
+        color: const Color(0xFF3B82F6),
+      ),
+      NoteLabel(
+        id: 'label_budget',
+        name: 'budget',
+        color: const Color(0xFFF59E0B),
+      ),
     ];
   }
 
@@ -873,10 +904,12 @@ class NotesProvider extends ChangeNotifier {
 
       if (query.isNotEmpty) {
         final labelNames = note.labelIds
-            .map((id) => labels
-                .where((label) => label.id == id)
-                .map((label) => label.name)
-                .join(' '))
+            .map(
+              (id) => labels
+                  .where((label) => label.id == id)
+                  .map((label) => label.name)
+                  .join(' '),
+            )
             .join(' ');
         final haystack = [
           note.title,
@@ -961,11 +994,13 @@ class NotesProvider extends ChangeNotifier {
   }
 
   void createFolder(String name) {
-    folders.add(Folder(
-      id: _newId('folder'),
-      name: name,
-      icon: Icons.folder_open_outlined,
-    ));
+    folders.add(
+      Folder(
+        id: _newId('folder'),
+        name: name,
+        icon: Icons.folder_open_outlined,
+      ),
+    );
     save();
     notifyListeners();
   }
@@ -985,7 +1020,12 @@ class NotesProvider extends ChangeNotifier {
     final index = folders.indexWhere((f) => f.id == id);
     if (index == -1) return;
     final old = folders[index];
-    folders[index] = Folder(id: old.id, name: cleaned, icon: old.icon, iconKey: old.iconKey);
+    folders[index] = Folder(
+      id: old.id,
+      name: cleaned,
+      icon: old.icon,
+      iconKey: old.iconKey,
+    );
     save();
     notifyListeners();
   }
@@ -997,7 +1037,9 @@ class NotesProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _refreshReminderStatesInternal({required bool showImmediateNotifications}) {
+  void _refreshReminderStatesInternal({
+    required bool showImmediateNotifications,
+  }) {
     final now = DateTime.now();
     for (final note in notes) {
       final due = note.reminderAt;
@@ -1116,20 +1158,39 @@ class NotesProvider extends ChangeNotifier {
   bool importJsonBackup(String jsonString) {
     try {
       final decoded = jsonDecode(jsonString) as Map<String, dynamic>;
-      notes = (decoded['notes'] as List? ?? [])
+      if (decoded['notes'] is! List) return false;
+      final restoredNotes = (decoded['notes'] as List? ?? [])
           .map((e) => Note.fromJson(Map<String, dynamic>.from(e)))
           .toList();
-      folders = (decoded['folders'] as List? ?? [])
+      final restoredFolders = (decoded['folders'] as List? ?? [])
           .map((e) => Folder.fromJson(Map<String, dynamic>.from(e)))
           .toList();
-      labels = (decoded['labels'] as List? ?? decoded['tags'] as List? ?? [])
-          .map((e) => NoteLabel.fromJson(Map<String, dynamic>.from(e)))
-          .toList();
-      currentPin = decoded['currentPin'] ?? currentPin;
-      isLockEnabled = decoded['isLockEnabled'] ?? isLockEnabled;
-      isFingerprintActive = decoded['isFingerprintActive'] ?? isFingerprintActive;
-      isGridView = decoded['isGridView'] ?? isGridView;
-      isDarkMode = decoded['isDarkMode'] ?? isDarkMode;
+      final restoredLabels =
+          (decoded['labels'] as List? ?? decoded['tags'] as List? ?? [])
+              .map((e) => NoteLabel.fromJson(Map<String, dynamic>.from(e)))
+              .toList();
+      final restoredCurrentPin = decoded['currentPin'] as String? ?? currentPin;
+      final restoredIsLockEnabled =
+          decoded['isLockEnabled'] as bool? ?? isLockEnabled;
+      final restoredIsFingerprintActive =
+          decoded['isFingerprintActive'] as bool? ?? isFingerprintActive;
+      final restoredIsGridView = decoded['isGridView'] as bool? ?? isGridView;
+      final restoredIsDarkMode = decoded['isDarkMode'] as bool? ?? isDarkMode;
+      final oldIds = notes.map((n) => n.id).toList();
+      notes = restoredNotes;
+      folders = restoredFolders;
+      labels = restoredLabels;
+      currentPin = restoredCurrentPin;
+      isLockEnabled = restoredIsLockEnabled;
+      isFingerprintActive = restoredIsFingerprintActive;
+      isGridView = restoredIsGridView;
+      isDarkMode = restoredIsDarkMode;
+      unawaited(() async {
+        for (final id in oldIds) {
+          await NotificationService.cancelReminder(id);
+        }
+        _rescheduleFutureReminders();
+      }());
       isVaultLocked = false;
       if (folders.isEmpty) _seedFolders();
       if (labels.isEmpty) _seedLabels();
@@ -1194,7 +1255,9 @@ class _SecureLockScreenState extends State<SecureLockScreen> {
       final supported = await _auth.isDeviceSupported();
       final available = await _auth.getAvailableBiometrics();
       if (!mounted) return;
-      setState(() => bioAvailable = canCheck && supported && available.isNotEmpty);
+      setState(
+        () => bioAvailable = canCheck && supported && available.isNotEmpty,
+      );
     } catch (_) {
       if (mounted) setState(() => bioAvailable = false);
     }
@@ -1220,7 +1283,8 @@ class _SecureLockScreenState extends State<SecureLockScreen> {
   void _press(String value) {
     final state = context.read<NotesProvider>();
     if (value == 'back') {
-      if (pin.isNotEmpty) setState(() => pin = pin.substring(0, pin.length - 1));
+      if (pin.isNotEmpty)
+        setState(() => pin = pin.substring(0, pin.length - 1));
       return;
     }
     if (value == 'clear') {
@@ -1262,18 +1326,25 @@ class _SecureLockScreenState extends State<SecureLockScreen> {
                     color: const Color(0xFFFBC02D).withOpacity(.18),
                     borderRadius: BorderRadius.circular(24),
                   ),
-                  child: const Icon(Icons.lightbulb_rounded,
-                      color: Color(0xFFFBC02D), size: 38),
+                  child: const Icon(
+                    Icons.lightbulb_rounded,
+                    color: Color(0xFFFBC02D),
+                    size: 38,
+                  ),
                 ),
                 const SizedBox(height: 18),
-                const Text('NeoNote Pro',
-                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
+                const Text(
+                  'NeoNote Pro',
+                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+                ),
                 const SizedBox(height: 8),
-                Text(status,
-                    style: TextStyle(
-                      color: isDark ? Colors.white60 : Colors.black54,
-                      fontSize: 13,
-                    )),
+                Text(
+                  status,
+                  style: TextStyle(
+                    color: isDark ? Colors.white60 : Colors.black54,
+                    fontSize: 13,
+                  ),
+                ),
                 const SizedBox(height: 26),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -1317,24 +1388,44 @@ class _SecureLockScreenState extends State<SecureLockScreen> {
                     childAspectRatio: 1.45,
                   ),
                   itemBuilder: (_, index) {
-                    final values = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'clear', '0', 'back'];
+                    final values = [
+                      '1',
+                      '2',
+                      '3',
+                      '4',
+                      '5',
+                      '6',
+                      '7',
+                      '8',
+                      '9',
+                      'clear',
+                      '0',
+                      'back',
+                    ];
                     final value = values[index];
                     final child = value == 'clear'
                         ? const Icon(Icons.refresh_rounded)
                         : value == 'back'
-                            ? const Icon(Icons.backspace_outlined)
-                            : Text(value,
-                                style: const TextStyle(
-                                    fontSize: 20, fontWeight: FontWeight.bold));
+                        ? const Icon(Icons.backspace_outlined)
+                        : Text(
+                            value,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          );
                     return InkWell(
                       borderRadius: BorderRadius.circular(24),
                       onTap: () => _press(value),
                       child: Ink(
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1F2937) : Colors.white,
+                          color: isDark
+                              ? const Color(0xFF1F2937)
+                              : Colors.white,
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(
-                              color: isDark ? Colors.white10 : Colors.black12),
+                            color: isDark ? Colors.white10 : Colors.black12,
+                          ),
                         ),
                         child: Center(child: child),
                       ),
@@ -1411,8 +1502,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text('Add new',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+              const Text(
+                'Add new',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+              ),
               const SizedBox(height: 14),
               Wrap(
                 spacing: 12,
@@ -1433,7 +1526,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Navigator.pop(context);
                       final attachment = await _pickImageAttachment(context);
                       if (attachment != null && mounted) {
-                        _openEditor(type: NoteType.image, attachment: attachment);
+                        _openEditor(
+                          type: NoteType.image,
+                          attachment: attachment,
+                        );
                       }
                     },
                   ),
@@ -1442,7 +1538,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     title: 'Audio',
                     onTap: () {
                       Navigator.pop(context);
-                      _openEditor(type: NoteType.audio, autoStartRecording: true);
+                      _openEditor(
+                        type: NoteType.audio,
+                        autoStartRecording: true,
+                      );
                     },
                   ),
                   _CreateTile(
@@ -1450,11 +1549,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     title: 'Drawing',
                     onTap: () async {
                       Navigator.pop(context);
-                      final attachment = await Navigator.of(context).push<NoteAttachment>(
-                        MaterialPageRoute(builder: (_) => const DrawingCaptureScreen()),
-                      );
+                      final attachment = await Navigator.of(context)
+                          .push<NoteAttachment>(
+                            MaterialPageRoute(
+                              builder: (_) => const DrawingCaptureScreen(),
+                            ),
+                          );
                       if (attachment != null && mounted) {
-                        _openEditor(type: NoteType.drawing, attachment: attachment);
+                        _openEditor(
+                          type: NoteType.drawing,
+                          attachment: attachment,
+                        );
                       }
                     },
                   ),
@@ -1492,7 +1597,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       key: _scaffoldKey,
-      drawer: isWide ? null : Drawer(child: _Sidebar(onClose: () => Navigator.pop(context))),
+      drawer: isWide
+          ? null
+          : Drawer(child: _Sidebar(onClose: () => Navigator.pop(context))),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showCreateSheet,
         icon: const Icon(Icons.add_rounded),
@@ -1529,12 +1636,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           const SizedBox(height: 10),
                           Expanded(
                             child: RefreshIndicator(
-                              onRefresh: () => context.read<NotesProvider>().refreshNow(),
+                              onRefresh: () =>
+                                  context.read<NotesProvider>().refreshNow(),
                               child: state.visibleNotes.isEmpty
                                   ? const _EmptyState(scrollable: true)
                                   : state.isGridView
-                                      ? _NotesGrid(onOpen: _openEditor)
-                                      : _NotesList(onOpen: _openEditor),
+                                  ? _NotesGrid(onOpen: _openEditor)
+                                  : _NotesList(onOpen: _openEditor),
                             ),
                           ),
                         ],
@@ -1556,7 +1664,11 @@ class _CreateTile extends StatelessWidget {
   final String title;
   final VoidCallback onTap;
 
-  const _CreateTile({required this.icon, required this.title, required this.onTap});
+  const _CreateTile({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1577,7 +1689,10 @@ class _CreateTile extends StatelessWidget {
           children: [
             Icon(icon, size: 26),
             const SizedBox(height: 8),
-            Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+            ),
           ],
         ),
       ),
@@ -1590,7 +1705,11 @@ class _Header extends StatelessWidget {
   final VoidCallback onMenu;
   final bool showMenu;
 
-  const _Header({required this.controller, required this.onMenu, required this.showMenu});
+  const _Header({
+    required this.controller,
+    required this.onMenu,
+    required this.showMenu,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1599,11 +1718,16 @@ class _Header extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
-        border: Border(bottom: BorderSide(color: state.isDarkMode ? Colors.white10 : Colors.black12)),
+        border: Border(
+          bottom: BorderSide(
+            color: state.isDarkMode ? Colors.white10 : Colors.black12,
+          ),
+        ),
       ),
       child: Row(
         children: [
-          if (showMenu) IconButton(onPressed: onMenu, icon: const Icon(Icons.menu_rounded)),
+          if (showMenu)
+            IconButton(onPressed: onMenu, icon: const Icon(Icons.menu_rounded)),
           Expanded(
             child: TextField(
               controller: controller,
@@ -1632,16 +1756,26 @@ class _Header extends StatelessWidget {
           IconButton(
             tooltip: state.isGridView ? 'List view' : 'Grid view',
             onPressed: context.read<NotesProvider>().toggleViewMode,
-            icon: Icon(state.isGridView ? Icons.view_agenda_outlined : Icons.grid_view_rounded),
+            icon: Icon(
+              state.isGridView
+                  ? Icons.view_agenda_outlined
+                  : Icons.grid_view_rounded,
+            ),
           ),
           IconButton(
             tooltip: 'Theme',
             onPressed: context.read<NotesProvider>().toggleTheme,
-            icon: Icon(state.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
+            icon: Icon(
+              state.isDarkMode
+                  ? Icons.light_mode_rounded
+                  : Icons.dark_mode_rounded,
+            ),
           ),
           IconButton(
             tooltip: 'Lock app',
-            onPressed: state.isLockEnabled ? () => state.setLockState(true) : null,
+            onPressed: state.isLockEnabled
+                ? () => state.setLockState(true)
+                : null,
             icon: const Icon(Icons.lock_outline_rounded),
           ),
         ],
@@ -1655,165 +1789,227 @@ class _Sidebar extends StatelessWidget {
 
   const _Sidebar({this.onClose});
 
-@override
-Widget build(BuildContext context) {
-  final state = context.watch<NotesProvider>();
-  final bg = state.isDarkMode ? const Color(0xFF1F2937) : Colors.white;
-  
-  return Container(
-    color: bg,
-    child: SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // BRAND HEADER (Stays pinned to top)
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFBC02D),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(Icons.lightbulb_rounded, color: Colors.black87),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text('NeoNote Pro',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                ),
-              ],
-            ),
-          ),
-          
-          // SCROLLABLE NAV BODY (Prevents the overflow bug)
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<NotesProvider>();
+    final bg = state.isDarkMode ? const Color(0xFF1F2937) : Colors.white;
+
+    return Container(
+      color: bg,
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // BRAND HEADER (Stays pinned to top)
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
                 children: [
-                  _NavItem(
-                    icon: Icons.lightbulb_outline,
-                    title: 'Notes',
-                    selected: state.currentView == NoteView.notes && state.selectedFolderId == 'all' && state.selectedLabelId == null,
-                    count: state.notes.where((n) => n.status == NoteStatus.active).length,
-                    onTap: () {
-                      context.read<NotesProvider>().selectView(NoteView.notes);
-                      onClose?.call();
-                    },
-                  ),
-                  _NavItem(
-                    icon: Icons.notifications_none_rounded,
-                    title: 'Reminders',
-                    selected: state.currentView == NoteView.reminders,
-                    count: state.notes.where((n) => n.reminderAt != null && n.status == NoteStatus.active).length,
-                    onTap: () {
-                      context.read<NotesProvider>().selectView(NoteView.reminders);
-                      onClose?.call();
-                    },
-                  ),
-                  _NavItem(
-                    icon: Icons.lock_outline_rounded,
-                    title: 'Locked',
-                    selected: state.currentView == NoteView.locked,
-                    count: state.notes.where((n) => n.isLocked && n.status != NoteStatus.trashed).length,
-                    onTap: () {
-                      context.read<NotesProvider>().selectView(NoteView.locked);
-                      onClose?.call();
-                    },
-                  ),
-                  _NavItem(
-                    icon: Icons.archive_outlined,
-                    title: 'Archive',
-                    selected: state.currentView == NoteView.archive,
-                    count: state.notes.where((n) => n.status == NoteStatus.archived).length,
-                    onTap: () {
-                      context.read<NotesProvider>().selectView(NoteView.archive);
-                      onClose?.call();
-                    },
-                  ),
-                  _NavItem(
-                    icon: Icons.delete_outline_rounded,
-                    title: 'Trash',
-                    selected: state.currentView == NoteView.trash,
-                    count: state.notes.where((n) => n.status == NoteStatus.trashed).length,
-                    onTap: () {
-                      context.read<NotesProvider>().selectView(NoteView.trash);
-                      onClose?.call();
-                    },
-                  ),
-                  const Divider(height: 24),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      children: [
-                        const Expanded(child: Text('Folders', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold))),
-                        IconButton(
-                          visualDensity: VisualDensity.compact,
-                          icon: const Icon(Icons.add_rounded, size: 18),
-                          onPressed: () => _showFolderDialog(context),
-                        ),
-                      ],
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFBC02D),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.lightbulb_rounded,
+                      color: Colors.black87,
                     ),
                   ),
-                  _NavItem(
-                    icon: Icons.layers_clear_outlined,
-                    title: 'Uncategorized',
-                    selected: state.selectedFolderId == 'uncategorized',
-                    count: state.notes.where((n) => n.folderId == null && n.status == NoteStatus.active).length,
-                    onTap: () {
-                      context.read<NotesProvider>().selectFolder('uncategorized');
-                      onClose?.call();
-                    },
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'NeoNote Pro',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
-                  ...state.folders.map((folder) => _NavItem(
+                ],
+              ),
+            ),
+
+            // SCROLLABLE NAV BODY (Prevents the overflow bug)
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _NavItem(
+                      icon: Icons.lightbulb_outline,
+                      title: 'Notes',
+                      selected:
+                          state.currentView == NoteView.notes &&
+                          state.selectedFolderId == 'all' &&
+                          state.selectedLabelId == null,
+                      count: state.notes
+                          .where((n) => n.status == NoteStatus.active)
+                          .length,
+                      onTap: () {
+                        context.read<NotesProvider>().selectView(
+                          NoteView.notes,
+                        );
+                        onClose?.call();
+                      },
+                    ),
+                    _NavItem(
+                      icon: Icons.notifications_none_rounded,
+                      title: 'Reminders',
+                      selected: state.currentView == NoteView.reminders,
+                      count: state.notes
+                          .where(
+                            (n) =>
+                                n.reminderAt != null &&
+                                n.status == NoteStatus.active,
+                          )
+                          .length,
+                      onTap: () {
+                        context.read<NotesProvider>().selectView(
+                          NoteView.reminders,
+                        );
+                        onClose?.call();
+                      },
+                    ),
+                    _NavItem(
+                      icon: Icons.lock_outline_rounded,
+                      title: 'Locked',
+                      selected: state.currentView == NoteView.locked,
+                      count: state.notes
+                          .where(
+                            (n) => n.isLocked && n.status != NoteStatus.trashed,
+                          )
+                          .length,
+                      onTap: () {
+                        context.read<NotesProvider>().selectView(
+                          NoteView.locked,
+                        );
+                        onClose?.call();
+                      },
+                    ),
+                    _NavItem(
+                      icon: Icons.archive_outlined,
+                      title: 'Archive',
+                      selected: state.currentView == NoteView.archive,
+                      count: state.notes
+                          .where((n) => n.status == NoteStatus.archived)
+                          .length,
+                      onTap: () {
+                        context.read<NotesProvider>().selectView(
+                          NoteView.archive,
+                        );
+                        onClose?.call();
+                      },
+                    ),
+                    _NavItem(
+                      icon: Icons.delete_outline_rounded,
+                      title: 'Trash',
+                      selected: state.currentView == NoteView.trash,
+                      count: state.notes
+                          .where((n) => n.status == NoteStatus.trashed)
+                          .length,
+                      onTap: () {
+                        context.read<NotesProvider>().selectView(
+                          NoteView.trash,
+                        );
+                        onClose?.call();
+                      },
+                    ),
+                    const Divider(height: 24),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Folders',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            icon: const Icon(Icons.add_rounded, size: 18),
+                            onPressed: () => _showFolderDialog(context),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _NavItem(
+                      icon: Icons.layers_clear_outlined,
+                      title: 'Uncategorized',
+                      selected: state.selectedFolderId == 'uncategorized',
+                      count: state.notes
+                          .where(
+                            (n) =>
+                                n.folderId == null &&
+                                n.status == NoteStatus.active,
+                          )
+                          .length,
+                      onTap: () {
+                        context.read<NotesProvider>().selectFolder(
+                          'uncategorized',
+                        );
+                        onClose?.call();
+                      },
+                    ),
+                    ...state.folders.map(
+                      (folder) => _NavItem(
                         icon: folder.icon,
                         title: folder.name,
                         selected: state.selectedFolderId == folder.id,
-                        count: state.notes.where((n) => n.folderId == folder.id && n.status == NoteStatus.active).length,
+                        count: state.notes
+                            .where(
+                              (n) =>
+                                  n.folderId == folder.id &&
+                                  n.status == NoteStatus.active,
+                            )
+                            .length,
                         onTap: () {
                           context.read<NotesProvider>().selectFolder(folder.id);
                           onClose?.call();
                         },
                         onLongPress: () => _showFolderActions(context, folder),
-                      )),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // BOTTOM BUTTONS PANEL (Stays pinned to bottom)
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                children: [
+                  _BottomButton(
+                    icon: Icons.security_rounded,
+                    title: 'Security',
+                    onTap: () => showDialog(
+                      context: context,
+                      builder: (_) => const SecuritySettingsDialog(),
+                    ),
+                  ),
+                  _BottomButton(
+                    icon: Icons.backup_outlined,
+                    title: 'Backup & Restore',
+                    onTap: () => showDialog(
+                      context: context,
+                      builder: (_) => const BackupDialog(),
+                    ),
+                  ),
                 ],
               ),
             ),
-          ),
-          
-          // BOTTOM BUTTONS PANEL (Stays pinned to bottom)
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              children: [
-                _BottomButton(
-                  icon: Icons.security_rounded,
-                  title: 'Security',
-                  onTap: () => showDialog(
-                    context: context,
-                    builder: (_) => const SecuritySettingsDialog(),
-                  ),
-                ),
-                _BottomButton(
-                  icon: Icons.backup_outlined,
-                  title: 'Backup & Restore',
-                  onTap: () => showDialog(
-                    context: context,
-                    builder: (_) => const BackupDialog(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   void _showFolderActions(BuildContext context, Folder folder) {
     showModalBottomSheet(
@@ -1832,8 +2028,14 @@ Widget build(BuildContext context) {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-              title: const Text('Delete folder', style: TextStyle(color: Colors.redAccent)),
+              leading: const Icon(
+                Icons.delete_outline_rounded,
+                color: Colors.redAccent,
+              ),
+              title: const Text(
+                'Delete folder',
+                style: TextStyle(color: Colors.redAccent),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _confirmDeleteFolder(context, folder);
@@ -1850,9 +2052,14 @@ Widget build(BuildContext context) {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Delete folder?'),
-        content: Text('Notes inside "${folder.name}" will become uncategorized.'),
+        content: Text(
+          'Notes inside "${folder.name}" will become uncategorized.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
           FilledButton.tonal(
             onPressed: () {
               context.read<NotesProvider>().removeFolder(folder.id);
@@ -1872,9 +2079,16 @@ Widget build(BuildContext context) {
       context: context,
       builder: (_) => AlertDialog(
         title: Text(folder == null ? 'New folder' : 'Rename folder'),
-        content: TextField(controller: ctrl, autofocus: true, decoration: const InputDecoration(hintText: 'Folder name')),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'Folder name'),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
             onPressed: () {
               final name = ctrl.text.trim();
@@ -1920,9 +2134,16 @@ class _NavItem extends StatelessWidget {
         dense: true,
         onTap: onTap,
         onLongPress: onLongPress,
-        leading: Icon(icon, size: 20, color: selected ? const Color(0xFFFBC02D) : null),
+        leading: Icon(
+          icon,
+          size: 20,
+          color: selected ? const Color(0xFFFBC02D) : null,
+        ),
         title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
-        trailing: Text('$count', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        trailing: Text(
+          '$count',
+          style: const TextStyle(fontSize: 12, color: Colors.grey),
+        ),
         selected: selected,
         selectedTileColor: const Color(0xFFFBC02D).withOpacity(.18),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
@@ -1936,14 +2157,21 @@ class _BottomButton extends StatelessWidget {
   final String title;
   final VoidCallback onTap;
 
-  const _BottomButton({required this.icon, required this.title, required this.onTap});
+  const _BottomButton({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       dense: true,
       leading: Icon(icon, size: 19),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+      title: Text(
+        title,
+        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+      ),
       onTap: onTap,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     );
@@ -1970,20 +2198,20 @@ class _QuickComposerState extends State<_QuickComposer> {
     final text = _ctrl.text.trim();
     if (text.isEmpty) return;
     context.read<NotesProvider>().upsertNote(
-          Note(
-            id: _newId('note'),
-            title: '',
-            content: text,
-            type: NoteType.text,
-            status: NoteStatus.active,
-            folderId: null,
-            labelIds: [],
-            colorHex: '#FFFFFF',
-            shoppingItems: [],
-            checklistItems: [],
-            attachments: [],
-          ),
-        );
+      Note(
+        id: _newId('note'),
+        title: '',
+        content: text,
+        type: NoteType.text,
+        status: NoteStatus.active,
+        folderId: null,
+        labelIds: [],
+        colorHex: '#FFFFFF',
+        shoppingItems: [],
+        checklistItems: [],
+        attachments: [],
+      ),
+    );
     _ctrl.clear();
   }
 
@@ -2049,7 +2277,8 @@ class _LabelsBar extends StatelessWidget {
             child: FilterChip(
               selected: state.selectedLabelId == null,
               label: const Text('All labels'),
-              onSelected: (_) => context.read<NotesProvider>().selectLabel(null),
+              onSelected: (_) =>
+                  context.read<NotesProvider>().selectLabel(null),
             ),
           ),
           ...state.labels.map(
@@ -2059,7 +2288,8 @@ class _LabelsBar extends StatelessWidget {
                 selected: state.selectedLabelId == label.id,
                 avatar: CircleAvatar(backgroundColor: label.color, radius: 5),
                 label: Text(label.name),
-                onSelected: (_) => context.read<NotesProvider>().selectLabel(label.id),
+                onSelected: (_) =>
+                    context.read<NotesProvider>().selectLabel(label.id),
               ),
             ),
           ),
@@ -2073,48 +2303,67 @@ class _LabelsBar extends StatelessWidget {
     Color selected = const Color(0xFFF59E0B);
     showDialog(
       context: context,
-      builder: (_) => StatefulBuilder(builder: (context, setState) {
-        return AlertDialog(
-          title: const Text('New label'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: ctrl, autofocus: true, decoration: const InputDecoration(hintText: 'Label name')),
-              const SizedBox(height: 14),
-              Wrap(
-                spacing: 8,
-                children: [
-                  const Color(0xFFF59E0B),
-                  const Color(0xFF3B82F6),
-                  const Color(0xFF10B981),
-                  const Color(0xFFEF4444),
-                  const Color(0xFFA855F7),
-                ].map((c) {
-                  return GestureDetector(
-                    onTap: () => setState(() => selected = c),
-                    child: CircleAvatar(
-                      backgroundColor: c,
-                      child: selected == c ? const Icon(Icons.check, color: Colors.white, size: 16) : null,
-                    ),
-                  );
-                }).toList(),
+      builder: (_) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('New label'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: ctrl,
+                  autofocus: true,
+                  decoration: const InputDecoration(hintText: 'Label name'),
+                ),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 8,
+                  children:
+                      [
+                        const Color(0xFFF59E0B),
+                        const Color(0xFF3B82F6),
+                        const Color(0xFF10B981),
+                        const Color(0xFFEF4444),
+                        const Color(0xFFA855F7),
+                      ].map((c) {
+                        return GestureDetector(
+                          onTap: () => setState(() => selected = c),
+                          child: CircleAvatar(
+                            backgroundColor: c,
+                            child: selected == c
+                                ? const Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 16,
+                                  )
+                                : null,
+                          ),
+                        );
+                      }).toList(),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  if (ctrl.text.trim().isNotEmpty) {
+                    context.read<NotesProvider>().createLabel(
+                      ctrl.text.trim(),
+                      selected,
+                    );
+                  }
+                  Navigator.pop(context);
+                },
+                child: const Text('Create'),
               ),
             ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-            FilledButton(
-              onPressed: () {
-                if (ctrl.text.trim().isNotEmpty) {
-                  context.read<NotesProvider>().createLabel(ctrl.text.trim(), selected);
-                }
-                Navigator.pop(context);
-              },
-              child: const Text('Create'),
-            ),
-          ],
-        );
-      }),
+          );
+        },
+      ),
     );
   }
 }
@@ -2136,11 +2385,19 @@ class _NotesTitleRow extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text('$label ($total)',
-              style: const TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.w800)),
+          child: Text(
+            '$label ($total)',
+            style: const TextStyle(
+              fontSize: 13,
+              color: Colors.grey,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
         ),
-        Text(state.isGridView ? 'Grid' : 'List',
-            style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        Text(
+          state.isGridView ? 'Grid' : 'List',
+          style: const TextStyle(fontSize: 12, color: Colors.grey),
+        ),
       ],
     );
   }
@@ -2156,56 +2413,75 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.lightbulb_outline_rounded, size: 72, color: Colors.grey.withOpacity(.5)),
+          Icon(
+            Icons.lightbulb_outline_rounded,
+            size: 72,
+            color: Colors.grey.withOpacity(.5),
+          ),
           const SizedBox(height: 14),
-          const Text('No notes here', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          const Text(
+            'No notes here',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+          ),
           const SizedBox(height: 6),
-          const Text('Tap Add or use quick note to create one.', style: TextStyle(color: Colors.grey)),
+          const Text(
+            'Tap Add or use quick note to create one.',
+            style: TextStyle(color: Colors.grey),
+          ),
         ],
       ),
     );
     if (!scrollable) return child;
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      children: [SizedBox(height: MediaQuery.of(context).size.height * .55, child: child)],
+      children: [
+        SizedBox(
+          height: MediaQuery.of(context).size.height * .55,
+          child: child,
+        ),
+      ],
     );
   }
 }
 
 class _NotesGrid extends StatelessWidget {
-  final void Function({Note? note, NoteType type, NoteAttachment? attachment}) onOpen;
+  final void Function({Note? note, NoteType type, NoteAttachment? attachment})
+  onOpen;
   const _NotesGrid({required this.onOpen});
 
   @override
   Widget build(BuildContext context) {
     final state = context.watch<NotesProvider>();
     final notes = state.visibleNotes;
-    return LayoutBuilder(builder: (context, constraints) {
-      final width = constraints.maxWidth;
-      int count = 2;
-      if (width > 700) count = 3;
-      if (width > 1050) count = 4;
-      if (width > 1400) count = 5;
-      return GridView.builder(
-        padding: const EdgeInsets.only(bottom: 96),
-        itemCount: notes.length,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: count,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: width < 420 ? .78 : .86,
-        ),
-        itemBuilder: (_, index) => NoteCard(
-          note: notes[index],
-          onOpen: () => onOpen(note: notes[index], type: notes[index].type),
-        ),
-      );
-    });
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        int count = 2;
+        if (width > 700) count = 3;
+        if (width > 1050) count = 4;
+        if (width > 1400) count = 5;
+        return GridView.builder(
+          padding: const EdgeInsets.only(bottom: 96),
+          itemCount: notes.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: count,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: width < 420 ? .78 : .86,
+          ),
+          itemBuilder: (_, index) => NoteCard(
+            note: notes[index],
+            onOpen: () => onOpen(note: notes[index], type: notes[index].type),
+          ),
+        );
+      },
+    );
   }
 }
 
 class _NotesList extends StatelessWidget {
-  final void Function({Note? note, NoteType type, NoteAttachment? attachment}) onOpen;
+  final void Function({Note? note, NoteType type, NoteAttachment? attachment})
+  onOpen;
   const _NotesList({required this.onOpen});
 
   @override
@@ -2229,118 +2505,195 @@ class NoteCard extends StatelessWidget {
   final bool listMode;
   final VoidCallback onOpen;
 
-  const NoteCard({super.key, required this.note, required this.onOpen, this.listMode = false});
+  const NoteCard({
+    super.key,
+    required this.note,
+    required this.onOpen,
+    this.listMode = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final state = context.watch<NotesProvider>();
-    final baseColor = parseHexColor(note.colorHex, fallback: state.isDarkMode ? const Color(0xFF1F2937) : Colors.white);
+    final baseColor = parseHexColor(
+      note.colorHex,
+      fallback: state.isDarkMode ? const Color(0xFF1F2937) : Colors.white,
+    );
     final cardColor = state.isDarkMode
         ? Color.lerp(baseColor, const Color(0xFF111827), .72)!
         : baseColor;
-    final textColor = state.isDarkMode ? Colors.white.withOpacity(.92) : Colors.black87;
+    final textColor = state.isDarkMode
+        ? Colors.white.withOpacity(.92)
+        : Colors.black87;
     final subText = state.isDarkMode ? Colors.white70 : Colors.black54;
 
-    return Material(
-      color: cardColor,
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        onTap: () => _handleOpen(context),
-        onLongPress: () => _showOptions(context),
+    return GestureDetector(
+      onHorizontalDragEnd: (details) {
+        if ((details.primaryVelocity ?? 0).abs() > 150) _showOptions(context);
+      },
+      child: Material(
+        color: cardColor,
         borderRadius: BorderRadius.circular(18),
-        child: Container(
-          constraints: listMode ? const BoxConstraints(minHeight: 116) : null,
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: state.isDarkMode ? Colors.white12 : Colors.black12),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: listMode ? MainAxisSize.min : MainAxisSize.max,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      note.title.trim().isEmpty ? 'Untitled' : note.title.trim(),
-                      maxLines: listMode ? 1 : 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.w800),
-                    ),
-                  ),
-                  if (note.isPinned) Icon(Icons.push_pin_rounded, size: 16, color: subText),
-                  if (note.isLocked) Padding(
-                    padding: const EdgeInsets.only(left: 4),
-                    child: Icon(Icons.lock_rounded, size: 16, color: subText),
-                  ),
-                ],
+        child: InkWell(
+          onTap: () => _handleOpen(context),
+          onLongPress: () => _showOptions(context),
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            constraints: listMode ? const BoxConstraints(minHeight: 116) : null,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: state.isDarkMode ? Colors.white12 : Colors.black12,
               ),
-              const SizedBox(height: 8),
-              if (note.isLocked)
-                Text('Locked note', style: TextStyle(color: subText, fontSize: 13))
-              else ...[
-                if (note.content.trim().isNotEmpty)
-                  Padding(
-                    padding: EdgeInsets.zero,
-                    child: Text(
-                      note.content.trim(),
-                      maxLines: listMode ? 2 : 5,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: subText, height: 1.35, fontSize: 13),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: listMode ? MainAxisSize.min : MainAxisSize.max,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        note.title.trim().isEmpty
+                            ? 'Untitled'
+                            : note.title.trim(),
+                        maxLines: listMode ? 1 : 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ),
-                  ),
-                if (note.type == NoteType.shopping && note.shoppingItems.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Text(
-                      '${note.shoppingItems.where((e) => e.isChecked).length}/${note.shoppingItems.length} items • ৳${note.shoppingItems.fold<double>(0, (p, e) => p + e.unitPrice).toStringAsFixed(0)}',
-                      style: TextStyle(color: subText, fontSize: 12, fontWeight: FontWeight.w700),
+                    if (note.isPinned)
+                      Icon(Icons.push_pin_rounded, size: 16, color: subText),
+                    if (note.isLocked)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: Icon(
+                          Icons.lock_rounded,
+                          size: 16,
+                          color: subText,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (note.isLocked)
+                  Text(
+                    'Locked note',
+                    style: TextStyle(color: subText, fontSize: 13),
+                  )
+                else ...[
+                  if (note.content.trim().isNotEmpty)
+                    Padding(
+                      padding: EdgeInsets.zero,
+                      child: Text(
+                        note.content.trim(),
+                        maxLines: listMode ? 2 : 5,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: subText,
+                          height: 1.35,
+                          fontSize: 13,
+                        ),
+                      ),
                     ),
-                  ),
-                if (note.type == NoteType.checklist && note.checklistItems.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: note.checklistItems.take(listMode ? 2 : 4).map((item) {
-                        return Row(
-                          children: [
-                            Icon(item.isChecked ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded, size: 15, color: subText),
-                            const SizedBox(width: 5),
-                            Expanded(child: Text(item.text, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: subText, fontSize: 12))),
-                          ],
-                        );
-                      }).toList(),
+                  if (note.type == NoteType.shopping &&
+                      note.shoppingItems.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Text(
+                        '${note.shoppingItems.length} items • ৳${note.shoppingItems.fold<double>(0, (p, e) => p + e.unitPrice).toStringAsFixed(0)}',
+                        style: TextStyle(
+                          color: subText,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
-                  ),
+                  if (note.type == NoteType.checklist &&
+                      note.checklistItems.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: note.checklistItems
+                            .take(listMode ? 2 : 4)
+                            .map((item) {
+                              return Row(
+                                children: [
+                                  Icon(
+                                    item.isChecked
+                                        ? Icons.check_box_rounded
+                                        : Icons.check_box_outline_blank_rounded,
+                                    size: 15,
+                                    color: subText,
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Expanded(
+                                    child: Text(
+                                      item.text,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: subText,
+                                        fontSize: 12,
+                                        decoration: item.isChecked
+                                            ? TextDecoration.lineThrough
+                                            : TextDecoration.none,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            })
+                            .toList(),
+                      ),
+                    ),
+                ],
+                if (!listMode) const Spacer(),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    if (note.reminderAt != null)
+                      _MiniChip(
+                        icon: note.reminderFired
+                            ? Icons.notifications_active_rounded
+                            : Icons.notifications_none_rounded,
+                        label: _reminderChipLabel(note),
+                        color: subText,
+                      ),
+                    if (note.attachments.isNotEmpty)
+                      _MiniChip(
+                        icon: Icons.attach_file_rounded,
+                        label:
+                            '${note.attachments.length} asset${note.attachments.length == 1 ? '' : 's'}',
+                        color: subText,
+                      ),
+                    if (note.type != NoteType.text)
+                      _MiniChip(
+                        icon: _typeIcon(note.type),
+                        label: note.type.name,
+                        color: subText,
+                      ),
+                    ...note.labelIds.map((id) {
+                      final label = state.labels
+                          .where((l) => l.id == id)
+                          .firstOrNull;
+                      if (label == null) return const SizedBox.shrink();
+                      return _MiniChip(label: label.name, color: subText);
+                    }),
+                  ],
+                ),
               ],
-              if (!listMode) const Spacer(),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  if (note.reminderAt != null)
-                    _MiniChip(
-                      icon: note.reminderFired ? Icons.notifications_active_rounded : Icons.notifications_none_rounded,
-                      label: _reminderChipLabel(note),
-                      color: subText,
-                    ),
-                  if (note.attachments.isNotEmpty)
-                    _MiniChip(icon: Icons.attach_file_rounded, label: '${note.attachments.length} asset${note.attachments.length == 1 ? '' : 's'}', color: subText),
-                  if (note.type != NoteType.text)
-                    _MiniChip(icon: _typeIcon(note.type), label: note.type.name, color: subText),
-                  ...note.labelIds.map((id) {
-                    final label = state.labels.where((l) => l.id == id).firstOrNull;
-                    if (label == null) return const SizedBox.shrink();
-                    return _MiniChip(label: label.name, color: subText);
-                  }),
-                ],
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -2360,40 +2713,50 @@ class NoteCard extends StatelessWidget {
     String error = '';
     showDialog(
       context: context,
-      builder: (_) => StatefulBuilder(builder: (context, setState) {
-        return AlertDialog(
-          title: const Text('Unlock note'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: pinCtrl,
-                autofocus: true,
-                obscureText: true,
-                keyboardType: TextInputType.number,
-                maxLength: 4,
-                textAlign: TextAlign.center,
-                decoration: const InputDecoration(counterText: '', hintText: 'PIN'),
-              ),
-              if (error.isNotEmpty) Text(error, style: const TextStyle(color: Colors.redAccent)),
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-            FilledButton(
-              onPressed: () {
-                if (pinCtrl.text == context.read<NotesProvider>().currentPin) {
-                  Navigator.pop(context);
-                  onOpen();
-                } else {
-                  setState(() => error = 'Wrong PIN');
-                }
-              },
-              child: const Text('Unlock'),
+      builder: (_) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Unlock note'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: pinCtrl,
+                  autofocus: true,
+                  obscureText: true,
+                  keyboardType: TextInputType.number,
+                  maxLength: 4,
+                  textAlign: TextAlign.center,
+                  decoration: const InputDecoration(
+                    counterText: '',
+                    hintText: 'PIN',
+                  ),
+                ),
+                if (error.isNotEmpty)
+                  Text(error, style: const TextStyle(color: Colors.redAccent)),
+              ],
             ),
-          ],
-        );
-      }),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  if (pinCtrl.text ==
+                      context.read<NotesProvider>().currentPin) {
+                    Navigator.pop(context);
+                    onOpen();
+                  } else {
+                    setState(() => error = 'Wrong PIN');
+                  }
+                },
+                child: const Text('Unlock'),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -2409,7 +2772,11 @@ class NoteCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Icon(note.isPinned ? Icons.push_pin_rounded : Icons.push_pin_outlined),
+                leading: Icon(
+                  note.isPinned
+                      ? Icons.push_pin_rounded
+                      : Icons.push_pin_outlined,
+                ),
                 title: Text(note.isPinned ? 'Unpin' : 'Pin'),
                 onTap: () {
                   Navigator.pop(context);
@@ -2423,7 +2790,12 @@ class NoteCard extends StatelessWidget {
                   onTap: () {
                     Navigator.pop(context);
                     state.archiveNote(note.id);
-                    _snack(context, 'Note archived', actionLabel: 'Undo', action: () => state.unarchiveNote(note.id));
+                    _snack(
+                      context,
+                      'Note archived',
+                      actionLabel: 'Undo',
+                      action: () => state.unarchiveNote(note.id),
+                    );
                   },
                 ),
               if (note.status == NoteStatus.archived)
@@ -2446,8 +2818,14 @@ class NoteCard extends StatelessWidget {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.delete_forever_rounded, color: Colors.redAccent),
-                  title: const Text('Delete forever', style: TextStyle(color: Colors.redAccent)),
+                  leading: const Icon(
+                    Icons.delete_forever_rounded,
+                    color: Colors.redAccent,
+                  ),
+                  title: const Text(
+                    'Delete forever',
+                    style: TextStyle(color: Colors.redAccent),
+                  ),
                   onTap: () {
                     Navigator.pop(context);
                     state.deleteForever(note.id);
@@ -2456,12 +2834,23 @@ class NoteCard extends StatelessWidget {
                 ),
               ] else
                 ListTile(
-                  leading: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-                  title: const Text('Move to trash', style: TextStyle(color: Colors.redAccent)),
+                  leading: const Icon(
+                    Icons.delete_outline_rounded,
+                    color: Colors.redAccent,
+                  ),
+                  title: const Text(
+                    'Move to trash',
+                    style: TextStyle(color: Colors.redAccent),
+                  ),
                   onTap: () {
                     Navigator.pop(context);
                     state.moveToTrash(note.id);
-                    _snack(context, 'Moved to trash', actionLabel: 'Undo', action: () => state.restoreNote(note.id));
+                    _snack(
+                      context,
+                      'Moved to trash',
+                      actionLabel: 'Undo',
+                      action: () => state.restoreNote(note.id),
+                    );
                   },
                 ),
             ],
@@ -2476,18 +2865,19 @@ class NoteCard extends StatelessWidget {
   static String _reminderChipLabel(Note note) {
     final due = note.reminderAt;
     if (due == null) return '';
-    if (note.reminderFired || !due.isAfter(DateTime.now())) return 'Reminder sent';
+    if (note.reminderFired || !due.isAfter(DateTime.now()))
+      return 'Reminder sent';
     return _dateLabel(due);
   }
 
   static IconData _typeIcon(NoteType type) => switch (type) {
-        NoteType.text => Icons.notes_rounded,
-        NoteType.checklist => Icons.check_box_outlined,
-        NoteType.shopping => Icons.shopping_basket_outlined,
-        NoteType.drawing => Icons.draw_outlined,
-        NoteType.audio => Icons.mic_none_rounded,
-        NoteType.image => Icons.image_outlined,
-      };
+    NoteType.text => Icons.notes_rounded,
+    NoteType.checklist => Icons.check_box_outlined,
+    NoteType.shopping => Icons.shopping_basket_outlined,
+    NoteType.drawing => Icons.draw_outlined,
+    NoteType.audio => Icons.mic_none_rounded,
+    NoteType.image => Icons.image_outlined,
+  };
 }
 
 // ignore: unused_element
@@ -2497,13 +2887,20 @@ class _AttachmentPreviewStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final firstImage = note.attachments.where((a) => a.type == 'image' || a.type == 'drawing').firstOrNull;
+    final firstImage = note.attachments
+        .where((a) => a.type == 'image' || a.type == 'drawing')
+        .firstOrNull;
     if (firstImage != null) {
       try {
         final bytes = base64Decode(firstImage.data);
         return ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          child: Image.memory(bytes, height: 86, width: double.infinity, fit: BoxFit.cover),
+          child: Image.memory(
+            bytes,
+            height: 86,
+            width: double.infinity,
+            fit: BoxFit.cover,
+          ),
         );
       } catch (_) {
         return const SizedBox.shrink();
@@ -2515,7 +2912,10 @@ class _AttachmentPreviewStrip extends StatelessWidget {
         children: [
           const Icon(Icons.mic_none_rounded, size: 18),
           const SizedBox(width: 6),
-          Text('$audioCount audio recording${audioCount > 1 ? 's' : ''}', style: const TextStyle(fontSize: 12)),
+          Text(
+            '$audioCount audio recording${audioCount > 1 ? 's' : ''}',
+            style: const TextStyle(fontSize: 12),
+          ),
         ],
       );
     }
@@ -2545,18 +2945,32 @@ class _MiniChip extends StatelessWidget {
             Icon(icon, size: 12, color: color),
             const SizedBox(width: 3),
           ],
-          Text(label, style: TextStyle(color: color, fontSize: 10.5, fontWeight: FontWeight.w700)),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-void _snack(BuildContext context, String message, {String? actionLabel, VoidCallback? action}) {
+void _snack(
+  BuildContext context,
+  String message, {
+  String? actionLabel,
+  VoidCallback? action,
+}) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(message),
-      action: actionLabel == null ? null : SnackBarAction(label: actionLabel, onPressed: action ?? () {}),
+      action: actionLabel == null
+          ? null
+          : SnackBarAction(label: actionLabel, onPressed: action ?? () {}),
     ),
   );
 }
@@ -2589,7 +3003,9 @@ class NoteEditorScreen extends StatefulWidget {
 
 class _NoteEditorScreenState extends State<NoteEditorScreen> {
   late final TextEditingController titleCtrl;
-  late final TextEditingController bodyCtrl;
+  late final quill.QuillController bodyCtrl;
+  final FocusNode _bodyFocus = FocusNode();
+  bool _showFormatting = true;
   late NoteType type;
   late NoteStatus status;
   late String colorHex;
@@ -2608,6 +3024,312 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   String? recordingPath;
   final AudioRecorder _recorder = AudioRecorder();
 
+  final List<String> _history = [];
+  int _historyIndex = -1;
+  bool _restoringHistory = false;
+  int _listRevision = 0;
+  late NotesProvider _provider;
+
+  String _snapshot() => jsonEncode({
+    'title': titleCtrl.text,
+    'body': bodyCtrl.document.toDelta().toJson(),
+    'type': type.index,
+    'color': colorHex,
+    'folder': folderId,
+    'labels': labelIds,
+    'pinned': isPinned,
+    'locked': isLocked,
+    'reminder': reminderAt?.toIso8601String(),
+    'fired': reminderFired,
+    'shopping': shoppingItems.map((e) => e.toJson()).toList(),
+    'checklist': checklistItems.map((e) => e.toJson()).toList(),
+    'attachments': attachments.map((e) => e.toJson()).toList(),
+  });
+
+  void _recordHistory() {
+    if (_restoringHistory) return;
+    final snapshot = _snapshot();
+    if (_historyIndex >= 0 && _history[_historyIndex] == snapshot) return;
+    _history.removeRange(_historyIndex + 1, _history.length);
+    _history.add(snapshot);
+    if (_history.length > 100) _history.removeAt(0);
+    _historyIndex = _history.length - 1;
+  }
+
+  @override
+  void setState(VoidCallback fn) {
+    super.setState(() {
+      fn();
+      _recordHistory();
+    });
+  }
+
+  void _textChanged() {
+    if (_restoringHistory || !mounted) return;
+    if (_historyIndex >= 0 && _history[_historyIndex] == _snapshot()) return;
+    setState(() {});
+  }
+
+  void _restoreHistory(int delta) {
+    _restoringHistory = true;
+    setState(() {
+      _historyIndex += delta;
+      final data = jsonDecode(_history[_historyIndex]) as Map<String, dynamic>;
+      titleCtrl.text = data['title'];
+      final previousDocument = bodyCtrl.document;
+      bodyCtrl.document = quill.Document.fromJson(data['body']);
+      bodyCtrl.toggledStyle = const quill.Style();
+      previousDocument.close();
+      type = NoteType.values[data['type']];
+      colorHex = data['color'];
+      folderId = data['folder'];
+      labelIds = List<String>.from(data['labels']);
+      isPinned = data['pinned'];
+      isLocked = data['locked'];
+      reminderAt = DateTime.tryParse(data['reminder'] ?? '');
+      reminderFired = data['fired'];
+      shoppingItems = (data['shopping'] as List)
+          .map((e) => ShoppingItem.fromJson(e))
+          .toList();
+      checklistItems = (data['checklist'] as List)
+          .map((e) => ChecklistItem.fromJson(e))
+          .toList();
+      attachments = (data['attachments'] as List)
+          .map((e) => NoteAttachment.fromJson(e))
+          .toList();
+      _listRevision++;
+    });
+    _restoringHistory = false;
+  }
+
+  Future<void> _shareNote() async {
+    FocusScope.of(context).unfocus();
+    if (type == NoteType.shopping) {
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ShoppingShareScreen(
+            title: titleCtrl.text,
+            rows: shoppingItems
+                .map(
+                  (item) => ShoppingShareRow(
+                    item.name,
+                    item.hasPrice ? item.unitPrice : null,
+                  ),
+                )
+                .toList(),
+          ),
+        ),
+      );
+      return;
+    }
+    final box = context.findRenderObject() as RenderBox?;
+    try {
+      final text = [
+        if (titleCtrl.text.trim().isNotEmpty) titleCtrl.text.trim(),
+        if (bodyCtrl.document.toPlainText().trim().isNotEmpty)
+          richNoteShareText(bodyCtrl.document),
+        if (type == NoteType.checklist)
+          ...checklistItems.map(
+            (item) => '${item.isChecked ? '[x]' : '[ ]'} ${item.text}',
+          ),
+      ].join('\n\n');
+      final files = <XFile>[];
+      final names = <String>[];
+      for (final attachment in attachments) {
+        if (attachment.type == 'image' || attachment.type == 'drawing') {
+          final bytes = base64Decode(attachment.data);
+          final png = bytes.length > 3 && bytes[0] == 0x89 && bytes[1] == 0x50;
+          files.add(
+            XFile.fromData(bytes, mimeType: png ? 'image/png' : 'image/jpeg'),
+          );
+          names.add('NeoNote_${files.length}.${png ? 'png' : 'jpg'}');
+        } else if (attachment.type == 'audio') {
+          files.add(XFile(attachment.data));
+          names.add(attachment.fileName ?? 'recording.m4a');
+        }
+      }
+      if (text.isEmpty && files.isEmpty) {
+        _snack(context, 'Add something to your note before sharing.');
+        return;
+      }
+      await SharePlus.instance.share(
+        ShareParams(
+          text: text.isEmpty ? null : text,
+          files: files.isEmpty ? null : files,
+          fileNameOverrides: names.isEmpty ? null : names,
+          sharePositionOrigin: box == null
+              ? null
+              : box.localToGlobal(Offset.zero) & box.size,
+        ),
+      );
+    } catch (_) {
+      if (mounted)
+        _snack(context, 'Could not share this note. Please try again.');
+    }
+  }
+
+  Future<void> _showOptions() async {
+    FocusScope.of(context).unfocus();
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const ListTile(
+                title: Text(
+                  'Note options',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ),
+              for (final option in [
+                ('Share', Icons.share_outlined),
+                ('Color', Icons.palette_outlined),
+                ('Labels', Icons.label_outline),
+                ('Category', Icons.folder_outlined),
+                (isPinned ? 'Unpin' : 'Pin', Icons.push_pin_outlined),
+                (isLocked ? 'Unlock note' : 'Lock note', Icons.lock_outline),
+                ('Reminder', Icons.notifications_none_rounded),
+                if (widget.initialNote != null)
+                  ('Move to trash', Icons.delete_outline),
+              ])
+                ListTile(
+                  leading: Icon(option.$2),
+                  title: Text(option.$1),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.pop(sheetContext, option.$1),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (!mounted || action == null) return;
+    if (action == 'Share') {
+      await _shareNote();
+      return;
+    }
+    if (action == 'Pin' || action == 'Unpin') {
+      setState(() => isPinned = !isPinned);
+      return;
+    }
+    if (action == 'Lock note' || action == 'Unlock note') {
+      setState(() => isLocked = !isLocked);
+      return;
+    }
+    if (action == 'Reminder') {
+      await _pickReminder();
+      return;
+    }
+    if (action == 'Move to trash') {
+      _delete();
+      return;
+    }
+    await showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, refresh) {
+          final state = context.watch<NotesProvider>();
+          return SafeArea(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      action,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 20),
+                    if (action == 'Color')
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          for (final hex in keepColors)
+                            Semantics(
+                              label: 'Color $hex',
+                              selected: colorHex == hex,
+                              child: IconButton.filledTonal(
+                                style: IconButton.styleFrom(
+                                  backgroundColor: parseHexColor(
+                                    hex,
+                                    fallback: Colors.white,
+                                  ),
+                                  foregroundColor: Colors.black87,
+                                  side: const BorderSide(color: Colors.black26),
+                                ),
+                                onPressed: () {
+                                  setState(() => colorHex = hex);
+                                  refresh(() {});
+                                },
+                                icon: Icon(
+                                  colorHex == hex
+                                      ? Icons.check
+                                      : Icons.circle_outlined,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    if (action == 'Labels') ...[
+                      if (state.labels.isEmpty)
+                        const Text(
+                          'Create labels from the home screen to organize your notes.',
+                        ),
+                      for (final label in state.labels)
+                        CheckboxListTile(
+                          value: labelIds.contains(label.id),
+                          title: Text(label.name),
+                          onChanged: (_) {
+                            setState(
+                              () => labelIds.contains(label.id)
+                                  ? labelIds.remove(label.id)
+                                  : labelIds.add(label.id),
+                            );
+                            refresh(() {});
+                          },
+                        ),
+                    ],
+                    if (action == 'Category') ...[
+                      ListTile(
+                        title: const Text('Uncategorized'),
+                        trailing: folderId == null
+                            ? const Icon(Icons.check)
+                            : null,
+                        onTap: () {
+                          setState(() => folderId = null);
+                          Navigator.pop(sheetContext);
+                        },
+                      ),
+                      for (final folder in state.folders)
+                        ListTile(
+                          leading: Icon(folder.icon),
+                          title: Text(folder.name),
+                          trailing: folderId == folder.id
+                              ? const Icon(Icons.check)
+                              : null,
+                          onTap: () {
+                            setState(() => folderId = folder.id);
+                            Navigator.pop(sheetContext);
+                          },
+                        ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   final keepColors = const <String>[
     '#FFFFFF',
     '#FFF8B8',
@@ -2625,9 +3347,13 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   void initState() {
     super.initState();
     final note = widget.initialNote;
+    _provider = context.read<NotesProvider>();
     activeNoteId = note?.id;
     titleCtrl = TextEditingController(text: note?.title ?? '');
-    bodyCtrl = TextEditingController(text: note?.content ?? '');
+    bodyCtrl = quill.QuillController(
+      document: loadRichNoteDocument(note?.richContent, note?.content ?? ''),
+      selection: const TextSelection.collapsed(offset: 0),
+    );
     type = note?.type ?? widget.initialType;
     status = note?.status ?? NoteStatus.active;
     colorHex = note?.colorHex ?? '#FFFFFF';
@@ -2640,9 +3366,14 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     attachments = note?.attachments.map((e) => e.copy()).toList() ?? [];
     reminderAt = note?.reminderAt;
     reminderFired = note?.reminderFired ?? false;
-    if (widget.initialAttachment != null) attachments.add(widget.initialAttachment!);
+    if (widget.initialAttachment != null)
+      attachments.add(widget.initialAttachment!);
     if (type == NoteType.shopping && shoppingItems.isEmpty) _addShoppingItem();
-    if (type == NoteType.checklist && checklistItems.isEmpty) _addChecklistItem();
+    if (type == NoteType.checklist && checklistItems.isEmpty)
+      _addChecklistItem();
+    _recordHistory();
+    titleCtrl.addListener(_textChanged);
+    bodyCtrl.addListener(_textChanged);
     if (widget.autoStartRecording) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && !isRecording) _toggleRecording();
@@ -2656,6 +3387,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     _recorder.dispose();
     titleCtrl.dispose();
     bodyCtrl.dispose();
+    _bodyFocus.dispose();
     super.dispose();
   }
 
@@ -2663,7 +3395,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     return Note(
       id: activeNoteId ?? _newId('note'),
       title: titleCtrl.text.trim(),
-      content: bodyCtrl.text.trim(),
+      content: bodyCtrl.document.toPlainText().trim(),
+      richContent: bodyCtrl.document.toDelta().toJson(),
       type: type,
       status: status,
       folderId: folderId,
@@ -2687,7 +3420,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     final note = _buildNote();
     if (note.hasContent) {
       activeNoteId = note.id;
-      context.read<NotesProvider>().upsertNote(note);
+      _provider.upsertNote(note);
     }
   }
 
@@ -2695,7 +3428,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     final note = _buildNote();
     if (note.hasContent) {
       activeNoteId = note.id;
-      context.read<NotesProvider>().upsertNote(note);
+      _provider.upsertNote(note);
     }
     skipAutoSave = true;
     Navigator.pop(context);
@@ -2716,10 +3449,19 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       lastDate: DateTime.now().add(const Duration(days: 3650)),
     );
     if (date == null || !mounted) return;
-    final time = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(reminderAt ?? DateTime.now()));
-    if (time == null) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(reminderAt ?? DateTime.now()),
+    );
+    if (time == null || !mounted) return;
     setState(() {
-      reminderAt = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+      reminderAt = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
       reminderFired = false;
     });
   }
@@ -2735,18 +3477,69 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text('Add to this note', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+              const Text(
+                'Add to this note',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+              ),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 12,
                 runSpacing: 12,
                 children: [
-                  _CreateTile(icon: Icons.notes_rounded, title: 'Note', onTap: () { Navigator.pop(context); setState(() => type = NoteType.text); }),
-                  _CreateTile(icon: Icons.image_outlined, title: 'Image', onTap: () async { Navigator.pop(context); await _attachImage(); }),
-                  _CreateTile(icon: Icons.mic_none_rounded, title: 'Audio', onTap: () { Navigator.pop(context); _toggleRecording(); }),
-                  _CreateTile(icon: Icons.draw_outlined, title: 'Drawing', onTap: () async { Navigator.pop(context); await _attachDrawing(); }),
-                  _CreateTile(icon: Icons.shopping_basket_outlined, title: 'Shopping', onTap: () { Navigator.pop(context); setState(() { type = NoteType.shopping; if (shoppingItems.isEmpty) _addShoppingItem(); }); }),
-                  _CreateTile(icon: Icons.check_box_outlined, title: 'Checklist', onTap: () { Navigator.pop(context); setState(() { type = NoteType.checklist; if (checklistItems.isEmpty) _addChecklistItem(); }); }),
+                  _CreateTile(
+                    icon: Icons.notes_rounded,
+                    title: 'Note',
+                    onTap: () {
+                      Navigator.pop(context);
+                      setState(() => type = NoteType.text);
+                    },
+                  ),
+                  _CreateTile(
+                    icon: Icons.image_outlined,
+                    title: 'Image',
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await _attachImage();
+                    },
+                  ),
+                  _CreateTile(
+                    icon: Icons.mic_none_rounded,
+                    title: 'Audio',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _toggleRecording();
+                    },
+                  ),
+                  _CreateTile(
+                    icon: Icons.draw_outlined,
+                    title: 'Drawing',
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await _attachDrawing();
+                    },
+                  ),
+                  _CreateTile(
+                    icon: Icons.shopping_basket_outlined,
+                    title: 'Shopping',
+                    onTap: () {
+                      Navigator.pop(context);
+                      setState(() {
+                        type = NoteType.shopping;
+                        if (shoppingItems.isEmpty) _addShoppingItem();
+                      });
+                    },
+                  ),
+                  _CreateTile(
+                    icon: Icons.check_box_outlined,
+                    title: 'Checklist',
+                    onTap: () {
+                      Navigator.pop(context);
+                      setState(() {
+                        type = NoteType.checklist;
+                        if (checklistItems.isEmpty) _addChecklistItem();
+                      });
+                    },
+                  ),
                 ],
               ),
             ],
@@ -2784,12 +3577,14 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         recordingPath = null;
         if (path != null && path.trim().isNotEmpty) {
           type = NoteType.audio;
-          attachments.add(NoteAttachment(
-            id: _newId('audio'),
-            type: 'audio',
-            data: path,
-            fileName: path.split('/').last,
-          ));
+          attachments.add(
+            NoteAttachment(
+              id: _newId('audio'),
+              type: 'audio',
+              data: path,
+              fileName: path.split('/').last,
+            ),
+          );
         }
       });
       if (mounted) _snack(context, 'Audio recording attached.');
@@ -2805,7 +3600,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       }
       final extension = kIsWeb ? 'wav' : 'm4a';
       final encoder = kIsWeb ? AudioEncoder.wav : AudioEncoder.aacLc;
-      final path = await createLocalAttachmentPath('neonote_audio_${DateTime.now().millisecondsSinceEpoch}.$extension');
+      final path = await createLocalAttachmentPath(
+        'neonote_audio_${DateTime.now().millisecondsSinceEpoch}.$extension',
+      );
       await _recorder.start(RecordConfig(encoder: encoder), path: path);
       setState(() {
         isRecording = true;
@@ -2818,7 +3615,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   }
 
   void _addShoppingItem() {
-    shoppingItems.add(ShoppingItem(id: _newId('shop'), name: '', unitPrice: 0));
+    shoppingItems.add(ShoppingItem(id: _newId('shop'), name: ''));
   }
 
   void _addChecklistItem() {
@@ -2826,10 +3623,21 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => Localizations.override(
+    context: context,
+    delegates: const [quill.FlutterQuillLocalizations.delegate],
+    child: Builder(builder: _buildEditor),
+  );
+
+  Widget _buildEditor(BuildContext context) {
     final state = context.watch<NotesProvider>();
-    final noteColor = parseHexColor(colorHex, fallback: state.isDarkMode ? const Color(0xFF1F2937) : Colors.white);
-    final surface = state.isDarkMode ? Color.lerp(noteColor, const Color(0xFF111827), .72)! : noteColor;
+    final noteColor = parseHexColor(
+      colorHex,
+      fallback: state.isDarkMode ? const Color(0xFF1F2937) : Colors.white,
+    );
+    final surface = state.isDarkMode
+        ? Color.lerp(noteColor, const Color(0xFF111827), .72)!
+        : noteColor;
     final textColor = state.isDarkMode ? Colors.white : Colors.black87;
 
     return WillPopScope(
@@ -2845,45 +3653,34 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           title: Text(widget.initialNote == null ? 'New note' : 'Edit note'),
           actions: [
             IconButton(
-              tooltip: isPinned ? 'Unpin' : 'Pin',
-              onPressed: () => setState(() => isPinned = !isPinned),
-              icon: Icon(isPinned ? Icons.push_pin_rounded : Icons.push_pin_outlined),
+              tooltip: 'Undo',
+              onPressed: _historyIndex > 0 ? () => _restoreHistory(-1) : null,
+              icon: const Icon(Icons.undo_rounded),
             ),
             IconButton(
-              tooltip: isLocked ? 'Unlock note' : 'Lock note',
-              onPressed: () => setState(() => isLocked = !isLocked),
-              icon: Icon(isLocked ? Icons.lock_rounded : Icons.lock_open_outlined),
+              tooltip: 'Redo',
+              onPressed: _historyIndex < _history.length - 1
+                  ? () => _restoreHistory(1)
+                  : null,
+              icon: const Icon(Icons.redo_rounded),
             ),
             IconButton(
-              tooltip: 'Reminder',
-              onPressed: _pickReminder,
-              icon: Icon(reminderAt == null ? Icons.notifications_none_rounded : Icons.notifications_active_rounded),
+              tooltip: 'Save note',
+              onPressed: _saveAndClose,
+              icon: const Icon(Icons.check_rounded),
             ),
-            if (widget.initialNote != null)
-              IconButton(
-                tooltip: 'Move to trash',
-                onPressed: _delete,
-                icon: const Icon(Icons.delete_outline_rounded),
-              ),
-            IconButton(onPressed: _saveAndClose, icon: const Icon(Icons.check_rounded)),
           ],
         ),
         body: ListView(
           padding: const EdgeInsets.fromLTRB(18, 10, 18, 110),
           children: [
-            _EditorMetaCard(
-              folderId: folderId,
-              labelIds: labelIds,
-              colorHex: colorHex,
-              colors: keepColors,
-              onFolderChanged: (v) => setState(() => folderId = v),
-              onLabelToggle: (id) => setState(() => labelIds.contains(id) ? labelIds.remove(id) : labelIds.add(id)),
-              onColorChanged: (v) => setState(() => colorHex = v),
-            ),
-            const SizedBox(height: 16),
             TextField(
               controller: titleCtrl,
-              style: TextStyle(color: textColor, fontSize: 24, fontWeight: FontWeight.w800),
+              style: TextStyle(
+                color: textColor,
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+              ),
               decoration: InputDecoration(
                 filled: false,
                 border: InputBorder.none,
@@ -2892,71 +3689,135 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
               ),
             ),
             if (type != NoteType.shopping && type != NoteType.checklist)
-              TextField(
-                controller: bodyCtrl,
-                maxLines: null,
-                keyboardType: TextInputType.multiline,
-                style: TextStyle(color: textColor, fontSize: 16, height: 1.45),
-                decoration: InputDecoration(
-                  filled: false,
-                  border: InputBorder.none,
-                  hintText: 'Take a note...',
-                  hintStyle: TextStyle(color: textColor.withOpacity(.45)),
-                ),
+              RichNoteField(controller: bodyCtrl, focusNode: _bodyFocus),
+            if (type == NoteType.shopping)
+              _ShoppingEditor(
+                key: ValueKey(_listRevision),
+                items: shoppingItems,
+                onChanged: () => setState(() {}),
+                onAdd: () => setState(_addShoppingItem),
               ),
-            if (type == NoteType.shopping) _ShoppingEditor(items: shoppingItems, onChanged: () => setState(() {}), onAdd: () => setState(_addShoppingItem)),
-            if (type == NoteType.checklist) _ChecklistEditor(items: checklistItems, onChanged: () => setState(() {}), onAdd: () => setState(_addChecklistItem)),
+            if (type == NoteType.checklist)
+              _ChecklistEditor(
+                key: ValueKey(_listRevision),
+                items: checklistItems,
+                onChanged: () => setState(() {}),
+                onAdd: () => setState(_addChecklistItem),
+              ),
             if (reminderAt != null)
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: Wrap(
                   children: [
                     InputChip(
-                      avatar: const Icon(Icons.notifications_none_rounded, size: 18),
-                      label: Text('Reminder: ${reminderAt!.day}/${reminderAt!.month}/${reminderAt!.year} ${reminderAt!.hour.toString().padLeft(2, '0')}:${reminderAt!.minute.toString().padLeft(2, '0')}'),
-                      onDeleted: () => setState(() { reminderAt = null; reminderFired = false; }),
+                      avatar: const Icon(
+                        Icons.notifications_none_rounded,
+                        size: 18,
+                      ),
+                      label: Text(
+                        'Reminder: ${reminderAt!.day}/${reminderAt!.month}/${reminderAt!.year} ${reminderAt!.hour.toString().padLeft(2, '0')}:${reminderAt!.minute.toString().padLeft(2, '0')}',
+                      ),
+                      onDeleted: () => setState(() {
+                        reminderAt = null;
+                        reminderFired = false;
+                      }),
                     ),
                   ],
                 ),
               ),
             const SizedBox(height: 14),
-            if (attachments.isNotEmpty) _AttachmentsEditor(attachments: attachments, onRemove: (id) => setState(() => attachments.removeWhere((a) => a.id == id))),
+            if (attachments.isNotEmpty)
+              _AttachmentsEditor(
+                attachments: attachments,
+                onRemove: (id) =>
+                    setState(() => attachments.removeWhere((a) => a.id == id)),
+              ),
             if (isRecording)
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: FilledButton.icon(
-                  style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                  ),
                   onPressed: _toggleRecording,
                   icon: const Icon(Icons.stop_rounded),
-                  label: Text('Stop recording${recordingPath == null ? '' : ' and attach'}'),
+                  label: Text(
+                    'Stop recording${recordingPath == null ? '' : ' and attach'}',
+                  ),
                 ),
               ),
           ],
         ),
-        bottomNavigationBar: SafeArea(
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-            decoration: BoxDecoration(
-              color: surface,
-              border: Border(top: BorderSide(color: state.isDarkMode ? Colors.white10 : Colors.black12)),
-            ),
-            child: Row(
-              children: [
-                FilledButton.tonalIcon(
-                  onPressed: _showAddModal,
-                  icon: const Icon(Icons.add_rounded),
-                  label: const Text('Add'),
-                ),
-                const SizedBox(width: 8),
-                if (isRecording)
-                  FilledButton.icon(
-                    onPressed: _toggleRecording,
-                    icon: const Icon(Icons.stop_rounded),
-                    label: const Text('Stop'),
+        bottomNavigationBar: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.viewInsetsOf(context).bottom,
+          ),
+          child: SafeArea(
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+              decoration: BoxDecoration(
+                color: surface,
+                border: Border(
+                  top: BorderSide(
+                    color: state.isDarkMode ? Colors.white10 : Colors.black12,
                   ),
-                const Spacer(),
-                Text(_typeLabel(type), style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w700)),
-              ],
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (type != NoteType.shopping &&
+                      type != NoteType.checklist &&
+                      _showFormatting) ...[
+                    RichNoteToolbar(controller: bodyCtrl),
+                    const Divider(height: 12),
+                  ],
+                  if (type == NoteType.shopping) ...[
+                    _ShoppingSummary(items: shoppingItems),
+                    const Divider(height: 20),
+                  ],
+                  Row(
+                    children: [
+                      FilledButton.tonalIcon(
+                        onPressed: _showAddModal,
+                        icon: const Icon(Icons.add_rounded),
+                        label: const Text('Add'),
+                      ),
+                      if (type != NoteType.shopping &&
+                          type != NoteType.checklist)
+                        IconButton(
+                          tooltip: 'Text formatting',
+                          isSelected: _showFormatting,
+                          onPressed: () => setState(
+                            () => _showFormatting = !_showFormatting,
+                          ),
+                          icon: const Icon(Icons.text_format_rounded),
+                        ),
+                      const SizedBox(width: 8),
+                      if (isRecording)
+                        FilledButton.icon(
+                          onPressed: _toggleRecording,
+                          icon: const Icon(Icons.stop_rounded),
+                          label: const Text('Stop'),
+                        ),
+                      const Spacer(),
+                      Text(
+                        _typeLabel(type),
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        tooltip: 'Note options',
+                        onPressed: _showOptions,
+                        icon: const Icon(Icons.more_horiz_rounded),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -2965,96 +3826,61 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   }
 
   String _typeLabel(NoteType value) => switch (value) {
-        NoteType.text => 'Note',
-        NoteType.checklist => 'Checklist',
-        NoteType.shopping => 'Shopping',
-        NoteType.drawing => 'Drawing',
-        NoteType.audio => 'Audio',
-        NoteType.image => 'Image',
-      };
+    NoteType.text => 'Note',
+    NoteType.checklist => 'Checklist',
+    NoteType.shopping => 'Shopping',
+    NoteType.drawing => 'Drawing',
+    NoteType.audio => 'Audio',
+    NoteType.image => 'Image',
+  };
 }
 
-class _EditorMetaCard extends StatelessWidget {
-  final String? folderId;
-  final List<String> labelIds;
-  final String colorHex;
-  final List<String> colors;
-  final ValueChanged<String?> onFolderChanged;
-  final ValueChanged<String> onLabelToggle;
-  final ValueChanged<String> onColorChanged;
-
-  const _EditorMetaCard({
-    required this.folderId,
-    required this.labelIds,
-    required this.colorHex,
-    required this.colors,
-    required this.onFolderChanged,
-    required this.onLabelToggle,
-    required this.onColorChanged,
-  });
+class _ShoppingSummary extends StatelessWidget {
+  final List<ShoppingItem> items;
+  const _ShoppingSummary({required this.items});
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<NotesProvider>();
-    final cardColor = state.isDarkMode ? const Color(0xFF1F2937).withOpacity(.72) : Colors.white.withOpacity(.82);
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: state.isDarkMode ? Colors.white12 : Colors.black12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          DropdownButtonFormField<String?>(
-            value: folderId,
-            isExpanded: true,
-            decoration: const InputDecoration(prefixIcon: Icon(Icons.folder_open_outlined), labelText: 'Folder'),
-            items: [
-              const DropdownMenuItem<String?>(value: null, child: Text('Uncategorized')),
-              ...state.folders.map((f) => DropdownMenuItem<String?>(value: f.id, child: Text(f.name))),
-            ],
-            onChanged: onFolderChanged,
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: state.labels.map((label) {
-              final selected = labelIds.contains(label.id);
-              return FilterChip(
-                selected: selected,
-                avatar: CircleAvatar(backgroundColor: label.color, radius: 5),
-                label: Text(label.name),
-                onSelected: (_) => onLabelToggle(label.id),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: colors.map((hex) {
-              final selected = colorHex == hex;
-              final color = parseHexColor(hex, fallback: Colors.white);
-              return GestureDetector(
-                onTap: () => onColorChanged(hex),
-                child: Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: selected ? Theme.of(context).colorScheme.primary : Colors.black26, width: selected ? 3 : 1),
+    final priced = items.where((item) => item.hasPrice);
+    final total = priced.fold<double>(0, (sum, item) => sum + item.unitPrice);
+    final theme = Theme.of(context);
+    return Row(
+      key: const ValueKey('shopping-summary'),
+      children: [
+        for (final metric in [
+          ('Items listed', '${items.length}', 'shopping-listed'),
+          ('Items summed', '${priced.length}', 'shopping-summed'),
+          ('Total taka', '\u09f3${total.toStringAsFixed(2)}', 'shopping-total'),
+        ])
+          Expanded(
+            flex: metric.$3 == 'shopping-total' ? 3 : 2,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    metric.$1,
+                    style: theme.textTheme.labelMedium,
+                    textAlign: TextAlign.center,
                   ),
-                  child: selected ? const Icon(Icons.check_rounded, size: 18) : null,
-                ),
-              );
-            }).toList(),
+                  const SizedBox(height: 4),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      metric.$2,
+                      key: ValueKey(metric.$3),
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ],
-      ),
+      ],
     );
   }
 }
@@ -3064,53 +3890,95 @@ class _ShoppingEditor extends StatelessWidget {
   final VoidCallback onChanged;
   final VoidCallback onAdd;
 
-  const _ShoppingEditor({required this.items, required this.onChanged, required this.onAdd});
+  const _ShoppingEditor({
+    super.key,
+    required this.items,
+    required this.onChanged,
+    required this.onAdd,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final total = items.fold<double>(0, (p, e) => p + e.unitPrice);
-    final remaining = items.where((e) => !e.isChecked).fold<double>(0, (p, e) => p + e.unitPrice);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ...items.map((item) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                children: [
-                  Checkbox(value: item.isChecked, onChanged: (v) { item.isChecked = v ?? false; onChanged(); }),
-                  Expanded(
-                    flex: 3,
-                    child: TextFormField(
-                      initialValue: item.name,
-                      decoration: const InputDecoration(hintText: 'Item'),
-                      onChanged: (v) => item.name = v,
+        ReorderableListView(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          buildDefaultDragHandles: false,
+          onReorder: (oldIndex, newIndex) {
+            if (newIndex > oldIndex) newIndex--;
+            final item = items.removeAt(oldIndex);
+            items.insert(newIndex, item);
+            onChanged();
+          },
+          children: [
+            for (final item in items)
+              Padding(
+                key: ValueKey(item.id),
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    ReorderableDragStartListener(
+                      index: items.indexOf(item),
+                      child: const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: Tooltip(
+                          message: 'Drag to reorder',
+                          child: Icon(Icons.drag_indicator_rounded),
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  SizedBox(
-                    width: 96,
-                    child: TextFormField(
-                      initialValue: item.unitPrice == 0 ? '' : item.unitPrice.toStringAsFixed(0),
-                      decoration: const InputDecoration(hintText: '৳'),
-                      keyboardType: TextInputType.number,
-                      onChanged: (v) { item.unitPrice = double.tryParse(v) ?? 0; onChanged(); },
+                    Expanded(
+                      flex: 3,
+                      child: TextFormField(
+                        initialValue: item.name,
+                        decoration: const InputDecoration(hintText: 'Item'),
+                        onChanged: (v) {
+                          item.name = v;
+                          onChanged();
+                        },
+                      ),
                     ),
-                  ),
-                  IconButton(onPressed: () { items.remove(item); onChanged(); }, icon: const Icon(Icons.close_rounded)),
-                ],
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      width: 96,
+                      child: TextFormField(
+                        initialValue: item.hasPrice
+                            ? item.unitPrice.toString()
+                            : '',
+                        decoration: const InputDecoration(hintText: '৳'),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        onChanged: (v) {
+                          final price = double.tryParse(v.trim());
+                          item.hasPrice =
+                              price != null && price.isFinite && price >= 0;
+                          item.unitPrice = item.hasPrice ? price! : 0;
+                          onChanged();
+                        },
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Remove item',
+                      onPressed: () {
+                        items.remove(item);
+                        onChanged();
+                      },
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ],
+                ),
               ),
-            )),
-        Align(alignment: Alignment.centerLeft, child: FilledButton.tonalIcon(onPressed: onAdd, icon: const Icon(Icons.add_rounded), label: const Text('Add item'))),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(color: Colors.black.withOpacity(.06), borderRadius: BorderRadius.circular(16)),
-          child: Column(
-            children: [
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Remaining'), Text('৳${remaining.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold))]),
-              const SizedBox(height: 6),
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Total'), Text('৳${total.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold))]),
-            ],
+          ],
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: FilledButton.tonalIcon(
+            onPressed: onAdd,
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('Add item'),
           ),
         ),
       ],
@@ -3123,30 +3991,69 @@ class _ChecklistEditor extends StatelessWidget {
   final VoidCallback onChanged;
   final VoidCallback onAdd;
 
-  const _ChecklistEditor({required this.items, required this.onChanged, required this.onAdd});
+  const _ChecklistEditor({
+    super.key,
+    required this.items,
+    required this.onChanged,
+    required this.onAdd,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ...items.map((item) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                children: [
-                  Checkbox(value: item.isChecked, onChanged: (v) { item.isChecked = v ?? false; onChanged(); }),
-                  Expanded(
-                    child: TextFormField(
-                      initialValue: item.text,
-                      decoration: const InputDecoration(hintText: 'List item'),
-                      onChanged: (v) => item.text = v,
+        ...items.map(
+          (item) => Padding(
+            key: ValueKey(item.id),
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Checkbox(
+                  value: item.isChecked,
+                  onChanged: (v) {
+                    item.isChecked = v ?? false;
+                    onChanged();
+                  },
+                ),
+                Expanded(
+                  child: TextFormField(
+                    initialValue: item.text,
+                    style: TextStyle(
+                      decoration: item.isChecked
+                          ? TextDecoration.lineThrough
+                          : TextDecoration.none,
+                      color: item.isChecked
+                          ? Theme.of(context).colorScheme.onSurfaceVariant
+                          : null,
                     ),
+                    decoration: const InputDecoration(hintText: 'List item'),
+                    onChanged: (v) {
+                      item.text = v;
+                      onChanged();
+                    },
                   ),
-                  IconButton(onPressed: () { items.remove(item); onChanged(); }, icon: const Icon(Icons.close_rounded)),
-                ],
-              ),
-            )),
-        Align(alignment: Alignment.centerLeft, child: FilledButton.tonalIcon(onPressed: onAdd, icon: const Icon(Icons.add_rounded), label: const Text('Add item'))),
+                ),
+                IconButton(
+                  tooltip: 'Remove item',
+                  onPressed: () {
+                    items.remove(item);
+                    onChanged();
+                  },
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: FilledButton.tonalIcon(
+            onPressed: onAdd,
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('Add item'),
+          ),
+        ),
       ],
     );
   }
@@ -3160,19 +4067,26 @@ class _AttachmentsEditor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      final itemWidth = constraints.maxWidth < 420 ? constraints.maxWidth : (constraints.maxWidth - 12) / 2;
-      return Wrap(
-        spacing: 12,
-        runSpacing: 12,
-        children: attachments.map((a) {
-          return SizedBox(
-            width: itemWidth,
-            child: _AttachmentTile(attachment: a, onRemove: () => onRemove(a.id)),
-          );
-        }).toList(),
-      );
-    });
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final itemWidth = constraints.maxWidth < 420
+            ? constraints.maxWidth
+            : (constraints.maxWidth - 12) / 2;
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: attachments.map((a) {
+            return SizedBox(
+              width: itemWidth,
+              child: _AttachmentTile(
+                attachment: a,
+                onRemove: () => onRemove(a.id),
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
   }
 }
 
@@ -3187,9 +4101,44 @@ class _AttachmentTile extends StatelessWidget {
     Widget body;
     if (attachment.type == 'image' || attachment.type == 'drawing') {
       try {
-        body = Image.memory(base64Decode(attachment.data), height: 160, width: double.infinity, fit: BoxFit.cover);
+        body = Semantics(
+          button: true,
+          label: 'View ${attachment.type}',
+          child: InkWell(
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => AttachmentViewerScreen(attachment: attachment),
+              ),
+            ),
+            child: Stack(
+              alignment: Alignment.bottomLeft,
+              children: [
+                Image.memory(
+                  base64Decode(attachment.data),
+                  height: 160,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => const SizedBox(
+                    height: 160,
+                    child: Center(child: Text('Preview unavailable')),
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Chip(
+                    avatar: Icon(Icons.zoom_in, size: 18),
+                    label: Text('Tap to view'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
       } catch (_) {
-        body = const SizedBox(height: 120, child: Center(child: Text('Preview unavailable')));
+        body = const SizedBox(
+          height: 120,
+          child: Center(child: Text('Preview unavailable')),
+        );
       }
     } else {
       body = SizedBox(
@@ -3200,7 +4149,11 @@ class _AttachmentTile extends StatelessWidget {
             children: [
               const Icon(Icons.mic_rounded, size: 36),
               const SizedBox(height: 8),
-              Text(attachment.fileName ?? 'Audio recording', maxLines: 1, overflow: TextOverflow.ellipsis),
+              Text(
+                attachment.fileName ?? 'Audio recording',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
           ),
         ),
@@ -3212,7 +4165,10 @@ class _AttachmentTile extends StatelessWidget {
       child: Stack(
         children: [
           Container(
-            decoration: BoxDecoration(border: Border.all(color: Colors.black12), borderRadius: BorderRadius.circular(18)),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.black12),
+              borderRadius: BorderRadius.circular(18),
+            ),
             child: body,
           ),
           Positioned(
@@ -3221,10 +4177,87 @@ class _AttachmentTile extends StatelessWidget {
             child: IconButton.filledTonal(
               onPressed: onRemove,
               icon: const Icon(Icons.close_rounded, size: 18),
-              style: IconButton.styleFrom(backgroundColor: Colors.black.withOpacity(.35), foregroundColor: Colors.white),
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.black.withOpacity(.35),
+                foregroundColor: Colors.white,
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class AttachmentViewerScreen extends StatefulWidget {
+  final NoteAttachment attachment;
+  const AttachmentViewerScreen({super.key, required this.attachment});
+
+  @override
+  State<AttachmentViewerScreen> createState() => _AttachmentViewerScreenState();
+}
+
+class _AttachmentViewerScreenState extends State<AttachmentViewerScreen> {
+  final _transformation = TransformationController();
+
+  @override
+  void dispose() {
+    _transformation.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Widget image;
+    try {
+      image = Image.memory(
+        base64Decode(widget.attachment.data),
+        fit: BoxFit.contain,
+        errorBuilder: (_, _, _) => const Text(
+          'Image unavailable',
+          style: TextStyle(color: Colors.white),
+        ),
+      );
+    } catch (_) {
+      image = const Text(
+        'Image unavailable',
+        style: TextStyle(color: Colors.white),
+      );
+    }
+    return Scaffold(
+      backgroundColor: const Color(0xFF101114),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF101114),
+        foregroundColor: Colors.white,
+        title: Text(
+          widget.attachment.fileName ??
+              (widget.attachment.type == 'drawing' ? 'Drawing' : 'Image'),
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'Reset zoom',
+            onPressed: () => _transformation.value = Matrix4.identity(),
+            icon: const Icon(Icons.fit_screen),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: InteractiveViewer(
+          transformationController: _transformation,
+          minScale: 1,
+          maxScale: 6,
+          child: SizedBox.expand(child: Center(child: image)),
+        ),
+      ),
+      bottomNavigationBar: const SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Text(
+            'Pinch to zoom ? Drag to explore',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white70),
+          ),
+        ),
       ),
     );
   }
@@ -3266,7 +4299,8 @@ class DrawingCaptureScreen extends StatefulWidget {
 
 class _DrawingCaptureScreenState extends State<DrawingCaptureScreen> {
   final DrawingController _drawingController = DrawingController();
-  final TransformationController _transformController = TransformationController();
+  final TransformationController _transformController =
+      TransformationController();
 
   @override
   void dispose() {
@@ -3283,7 +4317,9 @@ class _DrawingCaptureScreenState extends State<DrawingCaptureScreen> {
         if (mounted) _snack(context, 'Draw something before saving.');
         return;
       }
-      final jsonData = const JsonEncoder.withIndent('  ').convert(_drawingController.getJsonList());
+      final jsonData = const JsonEncoder.withIndent(
+        '  ',
+      ).convert(_drawingController.getJsonList());
       final attachment = NoteAttachment(
         id: _newId('drawing'),
         type: 'drawing',
@@ -3302,19 +4338,30 @@ class _DrawingCaptureScreenState extends State<DrawingCaptureScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Drawing'),
-        actions: [IconButton(onPressed: _saveDrawing, icon: const Icon(Icons.check_rounded))],
+        actions: [
+          IconButton(
+            onPressed: _saveDrawing,
+            icon: const Icon(Icons.check_rounded),
+          ),
+        ],
       ),
       body: SafeArea(
         child: Column(
           children: [
             Expanded(
-              child: LayoutBuilder(builder: (context, constraints) {
-                return DrawingBoard(
-                  controller: _drawingController,
-                  transformationController: _transformController,
-                  background: Container(width: constraints.maxWidth, height: constraints.maxHeight, color: Colors.white),
-                );
-              }),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return DrawingBoard(
+                    controller: _drawingController,
+                    transformationController: _transformController,
+                    background: Container(
+                      width: constraints.maxWidth,
+                      height: constraints.maxHeight,
+                      color: Colors.white,
+                    ),
+                  );
+                },
+              ),
             ),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -3397,9 +4444,15 @@ class _SecuritySettingsDialogState extends State<SecuritySettingsDialog> {
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Fingerprint unlock'),
-              subtitle: const Text(kIsWeb ? 'Not available on Web. Test on Android/iOS/macOS/Windows.' : 'Uses device biometric authentication.'),
+              subtitle: const Text(
+                kIsWeb
+                    ? 'Not available on Web. Test on Android/iOS/macOS/Windows.'
+                    : 'Uses device biometric authentication.',
+              ),
               value: !kIsWeb && fingerprintEnabled,
-              onChanged: !kIsWeb && lockEnabled ? (v) => setState(() => fingerprintEnabled = v) : null,
+              onChanged: !kIsWeb && lockEnabled
+                  ? (v) => setState(() => fingerprintEnabled = v)
+                  : null,
             ),
             if (lockEnabled)
               TextField(
@@ -3407,13 +4460,19 @@ class _SecuritySettingsDialogState extends State<SecuritySettingsDialog> {
                 obscureText: true,
                 keyboardType: TextInputType.number,
                 maxLength: 4,
-                decoration: const InputDecoration(labelText: '4-digit PIN', counterText: ''),
+                decoration: const InputDecoration(
+                  labelText: '4-digit PIN',
+                  counterText: '',
+                ),
               ),
           ],
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
         FilledButton(
           onPressed: () {
             if (lockEnabled && pinCtrl.text.length != 4) {
@@ -3421,10 +4480,10 @@ class _SecuritySettingsDialogState extends State<SecuritySettingsDialog> {
               return;
             }
             context.read<NotesProvider>().updateSecurity(
-                  lockEnabled: lockEnabled,
-                  fingerprintEnabled: !kIsWeb && fingerprintEnabled,
-                  pin: pinCtrl.text,
-                );
+              lockEnabled: lockEnabled,
+              fingerprintEnabled: !kIsWeb && fingerprintEnabled,
+              pin: pinCtrl.text,
+            );
             Navigator.pop(context);
           },
           child: const Text('Save'),
@@ -3442,88 +4501,99 @@ class BackupDialog extends StatefulWidget {
 }
 
 class _BackupDialogState extends State<BackupDialog> {
-  late final TextEditingController dataCtrl;
   bool busy = false;
-
-  @override
-  void initState() {
-    super.initState();
-    dataCtrl = TextEditingController(text: context.read<NotesProvider>().generateJsonBackup());
-  }
-
-  @override
-  void dispose() {
-    dataCtrl.dispose();
-    super.dispose();
-  }
 
   Future<void> _export() async {
     setState(() => busy = true);
     try {
-      final now = DateTime.now();
-      final stamp = '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
-      final result = await saveBackupFile('NeoNote_backup_$stamp.json', dataCtrl.text);
+      final backup = context.read<NotesProvider>().generateJsonBackup();
+      final stamp = DateTime.now().toIso8601String().replaceAll(':', '-');
+      final result = await saveBackupFile('NeoNote_backup_$stamp.json', backup);
       if (mounted) _snack(context, result);
-    } catch (e) {
-      if (mounted) _snack(context, 'Export failed: $e');
+    } catch (_) {
+      if (mounted)
+        _snack(context, 'Could not export backup. Please try again.');
     } finally {
       if (mounted) setState(() => busy = false);
     }
   }
 
- Future<void> _pickBackupFile() async {
-  try {
-    // CORRECT: .platform is required to tap into the underlying instance wrapper
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['json'],
-      withData: true, 
-    );
-
-    final file = result?.files.singleOrNull; // Safely handles empty or single results
-    final bytes = file?.bytes;
-    
-    if (bytes == null || bytes.isEmpty) return;
-    
-    dataCtrl.text = utf8.decode(bytes);
-    
-    if (mounted) _snack(context, 'Backup file loaded. Tap Restore to import.');
-  } catch (e) {
-    if (mounted) _snack(context, 'Backup file pick failed: $e');
-  }
-}
-
-  void _restore() {
-    final ok = context.read<NotesProvider>().importJsonBackup(dataCtrl.text);
-    if (ok) {
-      Navigator.pop(context);
-      _snack(context, 'Backup restored successfully.');
-    } else {
-      _snack(context, 'Invalid backup JSON.');
+  Future<void> _restore() async {
+    setState(() => busy = true);
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+        withData: true,
+      );
+      if (result == null || !mounted) return;
+      final bytes = result.files.singleOrNull?.bytes;
+      if (bytes == null || bytes.isEmpty)
+        throw const FormatException('Empty file');
+      final ok = context.read<NotesProvider>().importJsonBackup(
+        utf8.decode(bytes),
+      );
+      if (!ok) throw const FormatException('Invalid backup');
+      if (mounted) {
+        _snack(context, 'Backup restored successfully.');
+        Navigator.pop(context);
+      }
+    } catch (_) {
+      if (mounted)
+        _snack(
+          context,
+          'Could not restore this file. Choose a valid NeoNote JSON backup.',
+        );
+    } finally {
+      if (mounted) setState(() => busy = false);
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Backup & Restore'),
-      content: SizedBox(
-        width: 560,
-        child: TextField(
-          controller: dataCtrl,
-          minLines: 8,
-          maxLines: 12,
-          style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-          decoration: const InputDecoration(hintText: 'Paste backup JSON here'),
-        ),
+  Widget build(BuildContext context) => AlertDialog(
+    icon: const Icon(Icons.cloud_sync_outlined, size: 36),
+    title: const Text('Backup & restore'),
+    content: SizedBox(
+      width: 420,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Keep a copy of your notes, lists, labels, and attachments.',
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          FilledButton.icon(
+            onPressed: busy ? null : _export,
+            icon: const Icon(Icons.download_outlined),
+            label: const Text('Export backup'),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: busy ? null : _restore,
+            icon: const Icon(Icons.restore_rounded),
+            label: const Text('Restore backup'),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Choose a backup file to restore it immediately. It replaces your current notes and settings.',
+            style: Theme.of(context).textTheme.bodySmall,
+            textAlign: TextAlign.center,
+          ),
+          if (busy)
+            const Padding(
+              padding: EdgeInsets.only(top: 16),
+              child: LinearProgressIndicator(),
+            ),
+        ],
       ),
-      actions: [
-        TextButton(onPressed: busy ? null : _export, child: Text(busy ? 'Saving...' : 'Save file')),
-        TextButton(onPressed: _pickBackupFile, child: const Text('Pick file')),
-        TextButton(onPressed: () => Share.share(dataCtrl.text, subject: 'NeoNote backup'), child: const Text('Share')),
-        TextButton(onPressed: () { Clipboard.setData(ClipboardData(text: dataCtrl.text)); }, child: const Text('Copy')),
-        FilledButton(onPressed: _restore, child: const Text('Restore')),
-      ],
-    );
-  }
+    ),
+    actions: [
+      TextButton(
+        onPressed: busy ? null : () => Navigator.pop(context),
+        child: const Text('Done'),
+      ),
+    ],
+  );
 }
